@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiMessageSquare, FiPlus, FiTrash2, FiEdit3 } from 'react-icons/fi';
-import { chatService } from '../services/chatService';
+import chatService from '../services/chatService';
 
 const ConversationList = ({ 
   user, 
@@ -45,6 +45,43 @@ const ConversationList = ({
     if (!user || !user.id) {
       alert('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
       return;
+    }
+    
+    // Kiểm tra token hết hạn trước khi tạo hội thoại
+    const accessToken = localStorage.getItem('accessToken');
+    const refreshToken = localStorage.getItem('refreshToken');
+    const isExpired = !accessToken || window.jwtHelper?.isTokenExpired(accessToken);
+    
+    if (isExpired) {
+      // Nếu có refresh token, thử refresh token trước
+      if (refreshToken) {
+        try {
+          const authService = await import('../services/authService').then(module => module.default);
+          const refreshResult = await authService.refreshToken();
+          
+          if (!refreshResult.success) {
+            alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = '/login';
+            return;
+          }
+          // Refresh token thành công, tiếp tục tạo hội thoại
+        } catch (error) {
+          console.error('Error refreshing token:', error);
+          alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+          localStorage.removeItem('userInfo');
+          localStorage.removeItem('isLoggedIn');
+          window.location.href = '/login';
+          return;
+        }
+      } else {
+        alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('isLoggedIn');
+        window.location.href = '/login';
+        return;
+      }
     }
     
     try {

@@ -5,7 +5,7 @@ import ChatInput from './components/ChatInput';
 import WelcomeScreen from './components/WelcomeScreen';
 import Login from './components/Login';
 import FileChat from './components/FileChat';
-import { chatService } from './services/chatService';
+import chatService from './services/chatService';
 import authService from './services/authService';
 import { v4 as uuidv4 } from 'uuid';
 import { FiMenu, FiX, FiFile, FiMessageSquare } from 'react-icons/fi';
@@ -33,17 +33,61 @@ function App() {
 
   // Check authentication status on app start
   useEffect(() => {
-    if (authService.isAuthenticated()) {
-      const currentUser = authService.getCurrentUser();
-      if (currentUser && currentUser.id && /^[0-9a-fA-F]{24}$/.test(currentUser.id)) {
-        console.log('Authenticated user:', currentUser);
-        setUser(currentUser);
-        setError(null);
+    const checkAndRefreshAuth = async () => {
+      if (authService.isAuthenticated()) {
+        const currentUser = authService.getCurrentUser();
+        if (currentUser && currentUser.id && /^[0-9a-fA-F]{24}$/.test(currentUser.id)) {
+          console.log('Authenticated user:', currentUser);
+          setUser(currentUser);
+          setError(null);
+        } else {
+          console.error('Invalid or missing user ID:', currentUser);
+          setError('Không thể xác thực người dùng: ID người dùng không hợp lệ. Vui lòng đăng nhập lại.');
+        }
       } else {
-        console.error('Invalid or missing user ID:', currentUser);
-        setError('Không thể xác thực người dùng: ID người dùng không hợp lệ. Vui lòng đăng nhập lại.');
+        // Kiểm tra xem access token có hết hạn không nhưng refresh token vẫn hợp lệ
+        const accessToken = localStorage.getItem('accessToken');
+        const refreshToken = localStorage.getItem('refreshToken');
+        
+        // Nếu có refresh token và access token đã hết hạn, thử refresh
+        if (refreshToken && (!accessToken || window.jwtHelper?.isTokenExpired(accessToken))) {
+          console.log('Access token expired, trying to refresh...');
+          try {
+            // Thử refresh token
+            const refreshResult = await authService.refreshToken();
+            if (refreshResult.success) {
+              console.log('Token refreshed successfully');
+              // Lấy thông tin user sau khi refresh token thành công
+              const userResponse = await authService.getCurrentUserInfo();
+              if (userResponse.success) {
+                setUser({
+                  id: userResponse.data._id || userResponse.data.user_id,
+                  username: userResponse.data.username,
+                  name: userResponse.data.student_name || userResponse.data.username,
+                  studentCode: userResponse.data.student_code,
+                  studentClass: userResponse.data.student_class,
+                  loginTime: new Date().toISOString()
+                });
+                localStorage.setItem('isLoggedIn', 'true');
+                setError(null);
+              }
+            } else {
+              console.log('Failed to refresh token, logging out');
+              authService.logout();
+              setUser(null);
+              setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+            }
+          } catch (error) {
+            console.error('Error refreshing token:', error);
+            authService.logout();
+            setUser(null);
+            setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+          }
+        }
       }
-    }
+    };
+
+    checkAndRefreshAuth();
   }, []);
 
   // Initialize conversations and conversation

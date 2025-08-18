@@ -1,4 +1,6 @@
 import constants from '../utils/constants';
+import * as jwtHelper from '../utils/jwtHelper';
+import httpClient from '../utils/httpClient';
 
 const { API_BASE_URL, API_ENDPOINTS } = constants;
 
@@ -13,6 +15,9 @@ class AuthService {
         body: JSON.stringify({
           username: userData.username,
           password: userData.password,
+          student_code: userData.studentCode,
+          student_name: userData.studentName,
+          student_class: userData.studentClass
         }),
       });
 
@@ -38,21 +43,24 @@ class AuthService {
 
   async login(credentials) {
     try {
-      console.log('Login endpoint:', `${API_BASE_URL}${API_ENDPOINTS.LOGIN_USER}`);
+      console.log('Login endpoint:', `${API_BASE_URL}${API_ENDPOINTS.LOGIN}`);
       console.log('Login payload:', {
         username: credentials.username,
         password: credentials.password
       });
 
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.LOGIN_USER}`, {
+      // FormData đối với OAuth2PasswordRequestForm
+      const formData = new URLSearchParams();
+      formData.append('username', credentials.username);
+      formData.append('password', credentials.password);
+
+      // Sử dụng fetch trực tiếp vì đây là endpoint login đặc biệt
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.LOGIN}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({
-          username: credentials.username,
-          password: credentials.password
-        }),
+        body: formData,
       });
 
       const result = await response.json();
@@ -62,26 +70,40 @@ class AuthService {
         throw new Error(result.detail || result.message || 'Tên đăng nhập hoặc mật khẩu không đúng');
       }
 
+      // Kiểm tra dữ liệu trả về
       const data = result.data;
       if (!data) {
         throw new Error('No data in login response');
       }
 
-      const userId = data._id || data.id;
+      // Lưu JWT tokens
+      jwtHelper.saveTokens(data.access_token, data.refresh_token);
+
+      // Lấy thông tin người dùng từ API (sẽ sử dụng httpClient với khả năng refresh token)
+      const userResponse = await this.getCurrentUserInfo();
+      
+      if (!userResponse.success) {
+        throw new Error('Không thể lấy thông tin người dùng');
+      }
+
+      const user = userResponse.data;
+      const userId = user._id;
+      
       if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
-        console.error('Login response data:', data);
-        throw new Error('Invalid or missing user ID in login response');
+        console.error('User response data:', user);
+        throw new Error('Invalid or missing user ID in user response');
       }
 
       const userInfo = {
         id: userId,
-        username: data.username,
-        name: data.student_name || data.username,
-        studentCode: data.student_code,
-        studentClass: data.student_class,
+        username: user.username,
+        name: user.student_name || user.username,
+        studentCode: user.student_code,
+        studentClass: user.student_class,
         loginTime: new Date().toISOString()
       };
 
+      // Lưu thông tin user vào localStorage
       localStorage.setItem('userInfo', JSON.stringify(userInfo));
       localStorage.setItem('isLoggedIn', 'true');
 
@@ -103,6 +125,10 @@ class AuthService {
 
   logout() {
     try {
+      // Xóa JWT tokens
+      jwtHelper.removeTokens();
+      
+      // Xóa thông tin người dùng
       localStorage.removeItem('userInfo');
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('chatHistory');
@@ -124,8 +150,10 @@ class AuthService {
     try {
       const isLoggedIn = localStorage.getItem('isLoggedIn');
       const userInfo = localStorage.getItem('userInfo');
+      const accessToken = jwtHelper.getAccessToken();
       
-      return isLoggedIn === 'true' && userInfo !== null;
+      // Kiểm tra cả token và userInfo
+      return isLoggedIn === 'true' && userInfo !== null && accessToken !== null && !jwtHelper.isTokenExpired(accessToken);
     } catch (error) {
       console.error('Auth check error:', error);
       return false;
@@ -147,6 +175,90 @@ class AuthService {
     }
   }
 
+  async getCurrentUserInfo() {
+    try {
+      const accessToken = jwtHelper.getAccessToken();
+      
+      if (!accessToken) {
+        return {
+          success: false,
+          error: 'Không có token đăng nhập'
+        };
+      }
+      
+      // Sử dụng httpClient để tự động xử lý refresh token nếu cần
+      const result = await httpClient.get(API_ENDPOINTS.GET_ME);
+      
+      return {
+        success: true,
+        data: result.data,
+        message: result.message || 'Lấy thông tin người dùng thành công'
+      };
+    } catch (error) {
+      console.error('Get user info error:', error);
+      return {
+        success: false,
+        error: error.message || 'Lỗi khi lấy thông tin người dùng'
+      };
+    }
+  }
+
+  async refreshToken() {
+    try {
+      const refreshToken = jwtHelper.getRefreshToken();
+      
+      if (!refreshToken) {
+        console.error('No refresh token available');
+        return {
+          success: false,
+          error: 'Không có refresh token'
+        };
+      }
+      
+      console.log('Refreshing token...');
+      
+      // Sử dụng fetch trực tiếp thay vì httpClient để tránh vòng lặp
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REFRESH_TOKEN}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || errorData.message || 'Không thể làm mới token');
+      }
+      
+      const result = await response.json();
+      
+      if (!result.data || !result.data.access_token) {
+        throw new Error('Invalid response format from refresh token endpoint');
+      }
+      
+      console.log('Token refreshed successfully');
+      
+      // Lưu tokens mới
+      jwtHelper.saveTokens(result.data.access_token, result.data.refresh_token);
+      
+      return {
+        success: true,
+        data: {
+          access_token: result.data.access_token,
+          refresh_token: result.data.refresh_token
+        },
+        message: 'Làm mới token thành công'
+      };
+    } catch (error) {
+      console.error('Refresh token error:', error);
+      return {
+        success: false,
+        error: error.message || 'Lỗi khi làm mới token'
+      };
+    }
+  }
+  
   async updateUser(userData) {
     try {
       const currentUser = this.getCurrentUser();

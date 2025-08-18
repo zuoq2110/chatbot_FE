@@ -1,76 +1,13 @@
 import constants from '../utils/constants';
+import httpClient from '../utils/httpClient';
 
-const { API_BASE_URL, API_ENDPOINTS } = constants;
+const { API_ENDPOINTS } = constants;
 
-// Tạo fetch wrapper thay cho axios
-const apiClient = {
-  async request(url, options = {}) {
-    try {
-      const response = await fetch(`${API_BASE_URL}${url}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-        ...options,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
-    }
-  },
-
-  async get(url, options = {}) {
-    return this.request(url, { method: 'GET', ...options });
-  },
-
-  async post(url, data = {}, options = {}) {
-    return this.request(url, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      ...options,
-    });
-  },
-  
-  async upload(url, formData, options = {}) {
-    try {
-      const response = await fetch(`${API_BASE_URL}${url}`, {
-        method: 'POST',
-        body: formData,
-        ...options,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Upload Error:', error);
-      throw error;
-    }
-  },
-};
-
-export const chatService = {
+const chatService = {
   // Upload file for chat
   uploadFile: async (formData) => {
     try {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const options = {};
-      
-      if (userInfo.token) {
-        options.headers = {
-          'Authorization': `Bearer ${userInfo.token}`
-        };
-      }
-      
-      const response = await apiClient.upload(API_ENDPOINTS.UPLOAD_FILE, formData, options);
+      const response = await httpClient.upload(API_ENDPOINTS.UPLOAD_FILE, formData);
       
       return {
         success: true,
@@ -88,19 +25,10 @@ export const chatService = {
   // Query uploaded file
   queryFile: async (fileId, query) => {
     try {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const headers = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (userInfo.token) {
-        headers['Authorization'] = `Bearer ${userInfo.token}`;
-      }
-      
-      const response = await apiClient.post(API_ENDPOINTS.QUERY_FILE, {
+      const response = await httpClient.post(API_ENDPOINTS.QUERY_FILE, {
         file_id: fileId,
         query: query
-      }, { headers });
+      });
       
       return {
         success: true,
@@ -121,19 +49,10 @@ export const chatService = {
   // Query uploaded file with multiple questions
   multiQueryFile: async (fileId, queries) => {
     try {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const headers = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (userInfo.token) {
-        headers['Authorization'] = `Bearer ${userInfo.token}`;
-      }
-      
-      const response = await apiClient.post(API_ENDPOINTS.MULTI_QUERY_FILE, {
+      const response = await httpClient.post(API_ENDPOINTS.MULTI_QUERY_FILE, {
         file_id: fileId,
         queries: queries
-      }, { headers });
+      });
       
       return {
         success: true,
@@ -153,14 +72,7 @@ export const chatService = {
   // Get information about an uploaded file
   getFileInfo: async (fileId) => {
     try {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const headers = {};
-      
-      if (userInfo.token) {
-        headers['Authorization'] = `Bearer ${userInfo.token}`;
-      }
-      
-      const response = await apiClient.get(`${API_ENDPOINTS.FILE_INFO}/${fileId}`, { headers });
+      const response = await httpClient.get(`${API_ENDPOINTS.FILE_INFO}/${fileId}`);
       
       return {
         success: true,
@@ -178,14 +90,7 @@ export const chatService = {
   // List all uploaded files
   listFiles: async () => {
     try {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const headers = {};
-      
-      if (userInfo.token) {
-        headers['Authorization'] = `Bearer ${userInfo.token}`;
-      }
-      
-      const response = await apiClient.get(API_ENDPOINTS.LIST_FILES, { headers });
+      const response = await httpClient.get(API_ENDPOINTS.LIST_FILES);
       
       return {
         success: true,
@@ -204,17 +109,7 @@ export const chatService = {
   // Delete an uploaded file
   deleteFile: async (fileId) => {
     try {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const headers = {};
-      
-      if (userInfo.token) {
-        headers['Authorization'] = `Bearer ${userInfo.token}`;
-      }
-      
-      const response = await apiClient.request(`${API_ENDPOINTS.DELETE_FILE}/${fileId}`, {
-        method: 'DELETE',
-        headers
-      });
+      const response = await httpClient.delete(`${API_ENDPOINTS.DELETE_FILE}/${fileId}`);
       
       return {
         success: true,
@@ -231,52 +126,52 @@ export const chatService = {
   
   // Quick chat without saving conversation
   sendQuickMessage: async (message) => {
-  try {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-    const headers = {
-      'Content-Type': 'application/json',
-    };
-    if (userInfo.student_code) {
-      headers['student_code'] = userInfo.student_code;
-    }
-
-    const response = await apiClient.post(API_ENDPOINTS.QUICK_CHAT, {
-      content: message,
-    }, { headers });
-
-    if (response.statusCode === 200 && response.data) {
-      return {
-        success: true,
-        message: {
-          id: response.data._id || `quick_${Date.now()}`, // Thêm ID mặc định nếu API không cung cấp
-          content: response.data.content,
-          isUser: response.data.is_user || false,
-          createdAt: response.data.created_at,
-        },
-        metadata: response.metadata || null,
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const headers = {
+        'Content-Type': 'application/json',
       };
-    } else {
-      throw new Error(response.message || 'Failed to send message');
+      if (userInfo.student_code) {
+        headers['student_code'] = userInfo.student_code;
+      }
+
+      const response = await httpClient.post(API_ENDPOINTS.QUICK_CHAT, {
+        content: message,
+      }, { headers });
+
+      if (response.statusCode === 200 && response.data) {
+        return {
+          success: true,
+          message: {
+            id: response.data._id || `quick_${Date.now()}`, // Thêm ID mặc định nếu API không cung cấp
+            content: response.data.content,
+            isUser: response.data.is_user || false,
+            createdAt: response.data.created_at,
+          },
+          metadata: response.metadata || null,
+        };
+      } else {
+        throw new Error(response.message || 'Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending quick message:', error);
+      return {
+        success: false,
+        message: {
+          id: `error_${Date.now()}`,
+          content: 'Xin lỗi, hiện tại hệ thống đang gặp sự cố. Vui lòng thử lại sau.',
+          isUser: false,
+          createdAt: new Date().toISOString(),
+        },
+        error: error.message,
+      };
     }
-  } catch (error) {
-    console.error('Error sending quick message:', error);
-    return {
-      success: false,
-      message: {
-        id: `error_${Date.now()}`,
-        content: 'Xin lỗi, hiện tại hệ thống đang gặp sự cố. Vui lòng thử lại sau.',
-        isUser: false,
-        createdAt: new Date().toISOString(),
-      },
-      error: error.message,
-    };
-  }
-},
+  },
 
   // Create new conversation
   createConversation: async (userId, title = 'Cuộc trò chuyện mới') => {
     try {
-      const response = await apiClient.post(API_ENDPOINTS.CONVERSATIONS, {
+      const response = await httpClient.post(API_ENDPOINTS.CONVERSATIONS, {
         user_id: userId,
         title: title,
       });
@@ -307,7 +202,7 @@ export const chatService = {
   // Get user conversations
   getConversations: async (userId, skip = 0, limit = 20) => {
     try {
-      const response = await apiClient.get(
+      const response = await httpClient.get(
         `${API_ENDPOINTS.CONVERSATIONS}?user_id=${userId}&skip=${skip}&limit=${limit}`
       );
 
@@ -337,38 +232,38 @@ export const chatService = {
 
   // Get messages from a conversation
   getMessages: async (conversationId, skip = 0, limit = 50) => {
-  try {
-    const response = await apiClient.get(
-      `${API_ENDPOINTS.MESSAGES}/${conversationId}?skip=${skip}&limit=${limit}`
-    );
+    try {
+      const response = await httpClient.get(
+        `${API_ENDPOINTS.MESSAGES}/${conversationId}?skip=${skip}&limit=${limit}`
+      );
 
-    if (response.statusCode === 200 && response.data) {
+      if (response.statusCode === 200 && response.data) {
+        return {
+          success: true,
+          messages: response.data.map(msg => ({
+            id: msg._id,
+            content: msg.content,
+            isUser: msg.is_user,
+            createdAt: msg.created_at,
+          })),
+        };
+      } else {
+        throw new Error(response.message || 'Failed to get messages');
+      }
+    } catch (error) {
+      console.error('Error getting messages:', error);
       return {
-        success: true,
-        messages: response.data.map(msg => ({
-          id: msg._id,
-          content: msg.content,
-          isUser: msg.is_user,
-          createdAt: msg.created_at,
-        })),
+        success: false,
+        messages: [],
+        error: error.message,
       };
-    } else {
-      throw new Error(response.message || 'Failed to get messages');
     }
-  } catch (error) {
-    console.error('Error getting messages:', error);
-    return {
-      success: false,
-      messages: [],
-      error: error.message,
-    };
-  }
-},
+  },
 
   // Send message to a conversation and get AI response
   sendMessage: async (conversationId, message) => {
     try {
-        console.log(conversationId, message);
+      console.log(conversationId, message);
       // Get current user info for context
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
       
@@ -381,7 +276,7 @@ export const chatService = {
         headers['student_code'] = userInfo.student_code;
       }
       
-      const response = await apiClient.post(
+      const response = await httpClient.post(
         `/api/chat/${conversationId}/messages`,
         {
           content: message,
@@ -415,12 +310,9 @@ export const chatService = {
   // Update conversation title
   updateConversation: async (conversationId, title) => {
     try {
-      const response = await apiClient.request(
+      const response = await httpClient.put(
         `/api/chat/conversations/${conversationId}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify({ title }),
-        }
+        { title }
       );
 
       if (response.statusCode === 200 && response.data) {
@@ -449,10 +341,7 @@ export const chatService = {
   // Delete conversation
   deleteConversation: async (conversationId) => {
     try {
-      const response = await apiClient.request(
-        `/api/chat/conversations/${conversationId}`,
-        { method: 'DELETE' }
-      );
+      const response = await httpClient.delete(`/api/chat/conversations/${conversationId}`);
 
       if (response.statusCode === 200) {
         return {
@@ -474,7 +363,7 @@ export const chatService = {
   // Get chatbot status
   getStatus: async () => {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.HEALTH);
+      const response = await httpClient.get(API_ENDPOINTS.HEALTH);
       return {
         success: true,
         status: response.status || 'online',
@@ -511,7 +400,7 @@ export const chatService = {
   // Feedback on response
   sendFeedback: async (messageId, rating, comment) => {
     try {
-      const response = await apiClient.post(API_ENDPOINTS.FEEDBACK, {
+      const response = await httpClient.post(API_ENDPOINTS.FEEDBACK, {
         message_id: messageId,
         rating: rating,
         comment: comment,
@@ -531,5 +420,4 @@ export const chatService = {
   },
 };
 
-const services = { chatService };
-export default services;
+export default chatService;

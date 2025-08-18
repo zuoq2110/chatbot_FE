@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { chatService } from '../services/chatService';
+import chatService from '../services/chatService';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import '../components/ChatInput.css';

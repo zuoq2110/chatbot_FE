@@ -5,8 +5,12 @@ export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localh
 export const API_ENDPOINTS = {
   // User endpoints (theo backend routing)
   CREATE_USER: '/api/users',
-  LOGIN_USER: '/api/users/login',
   GET_USER: '/api/users',
+  
+  // Auth endpoints
+  LOGIN: '/api/auth/login',
+  REFRESH_TOKEN: '/api/auth/refresh',
+  GET_ME: '/api/auth/me',
   
   // Chat endpoints (theo backend routing)
   QUICK_CHAT: '/api/chat/quick-messages',
