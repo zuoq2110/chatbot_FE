@@ -1,7 +1,10 @@
-import React from 'react';
-import { FiMessageCircle, FiBook, FiHelpCircle, FiClock, FiDollarSign } from 'react-icons/fi';
+import React, { useState } from 'react';
+import { FiMessageCircle, FiBook, FiHelpCircle, FiClock, FiDollarSign, FiBarChart2 } from 'react-icons/fi';
+import UsageStats from './UsageStats';
 
-const WelcomeScreen = ({ onSendMessage }) => {
+const WelcomeScreen = ({ onSendMessage, user, welcomeMessage }) => {
+  const [showUsageStats, setShowUsageStats] = useState(false);
+
   const quickActions = [
     {
       icon: FiBook,
@@ -105,9 +108,10 @@ const WelcomeScreen = ({ onSendMessage }) => {
       </div>
 
       {/* Footer info */}
-      <div className="text-center text-xs sm:text-sm text-gray-500">
+      <div className="text-center text-xs sm:text-sm text-gray-500 mb-4">
         <p>💡 Mẹo: Bạn có thể nhập câu hỏi bằng giọng nói hoặc gõ trực tiếp</p>
       </div>
+
     </div>
   );
 };

@@ -1,5 +1,5 @@
 // API Base URL
-export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3434';
 
 // API endpoints
 export const API_ENDPOINTS = {
@@ -23,6 +23,41 @@ export const API_ENDPOINTS = {
   FILE_INFO: '/api/chat/file-info', // endpoint để lấy thông tin file
   LIST_FILES: '/api/chat/list-files', // endpoint để liệt kê tất cả files
   DELETE_FILE: '/api/chat/delete-file', // endpoint để xóa file
+  
+  // Admin endpoints
+  ADMIN_GET_USERS: '/api/users/admin/all',
+  ADMIN_UPDATE_USER: '/api/users/admin',
+  ADMIN_DELETE_USER: '/api/users/admin',
+  
+  // Models endpoints
+  MODELS: {
+    GET_ALL: '/api/models',
+    GET_ACTIVE: '/api/models/active',
+    ACTIVATE: (modelId) => `/api/models/activate/${modelId}`,
+    UPDATE_PARAMS: (modelId) => `/api/models/params/${modelId}`,
+    UPLOAD: '/api/models/upload'
+  },
+  
+  ADMIN_GET_RATE_LIMITS: '/api/admin/rate-limits',
+  ADMIN_UPDATE_RATE_LIMITS: '/api/admin/rate-limits',
+  
+  ADMIN_GET_USAGE_STATS: '/api/admin/stats',
+  
+  ADMIN_GET_CONVERSATIONS: '/api/admin/conversations',
+  
+  ADMIN_GET_MODELS: '/api/admin/models',
+  ADMIN_ACTIVATE_MODEL: '/api/admin/models/activate',
+  ADMIN_UPDATE_MODEL_PARAMS: '/api/admin/models/params',
+  ADMIN_UPLOAD_MODEL: '/api/admin/models/upload',
+  
+  // Admin RAG Management endpoints
+  ADMIN_LIST_TRAINING_FILES: '/api/admin/rag/list-training-files',
+  ADMIN_UPLOAD_TRAINING_FILE: '/api/admin/rag/upload-training-file',
+  ADMIN_DELETE_TRAINING_FILE: '/api/admin/rag/delete-training-file',
+  ADMIN_REBUILD_RAG_INDEX: '/api/admin/rag/rebuild-rag-index',
+  
+  // Settings endpoints
+  SETTINGS: '/api/settings',
   
   // Legacy endpoints
   CHAT: '/api/chat',
