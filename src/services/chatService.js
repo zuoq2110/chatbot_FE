@@ -300,6 +300,18 @@ const chatService = {
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      // Kiểm tra nếu là lỗi rate limit (HTTP 429)
+      if (error.response && error.response.status === 429) {
+        return {
+          success: false,
+          statusCode: 429,
+          message: error.response.data?.message || 'Bạn đã vượt quá giới hạn gửi tin nhắn. Vui lòng thử lại sau.',
+          error: error.response.data?.message || error.message,
+          isRateLimit: true
+        };
+      }
+      
       return {
         success: false,
         error: error.message,

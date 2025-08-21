@@ -1,6 +1,7 @@
 import React from 'react';
 import './AppBar.css';
-import { FiFile, FiMessageSquare } from 'react-icons/fi';
+import { FiFile, FiMessageSquare, FiSettings } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 
 const AppBar = ({ user, onLogout, viewMode, onSwitchMode }) => {
   return (
@@ -39,6 +40,14 @@ const AppBar = ({ user, onLogout, viewMode, onSwitchMode }) => {
           {user ? (
             <div className="user-info">
               <span className="welcome-text">Xin chào, {user.name}!</span>
+              
+              {/* Admin Dashboard Link - only show for admin users */}
+              {user.role === 'admin' && (
+                <Link to="/admin" className="admin-link">
+                  <FiSettings /> Quản trị
+                </Link>
+              )}
+              
               <button 
                 className="logout-btn"
                 onClick={onLogout}

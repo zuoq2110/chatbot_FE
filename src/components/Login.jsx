@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Login.css';
 import LoginAppBar from './LoginAppBar';
 import authService from '../services/authService';
+import { useLocation } from 'react-router-dom';
 
-const Login = ({ onLogin }) => {
+const Login = ({ onLogin, adminMode = false }) => {
   const [isLoginMode, setIsLoginMode] = useState(true);
+  const [isAdminMode, setIsAdminMode] = useState(adminMode);
+  const location = useLocation();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -12,6 +15,21 @@ const Login = ({ onLogin }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Kiểm tra nếu đang ở trang admin từ URL
+  useEffect(() => {
+    const path = location?.pathname || '';
+    console.log('Current path:', path);
+    
+    if (path.includes('/admin') || adminMode) {
+      console.log('Setting admin mode to true');
+      setIsAdminMode(true);
+      setIsLoginMode(true); // Admin luôn ở chế độ đăng nhập
+    } else {
+      console.log('Setting admin mode to false');
+      setIsAdminMode(false);
+    }
+  }, [location, adminMode]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -32,6 +50,7 @@ const Login = ({ onLogin }) => {
         // Login validation
         if (!formData.username?.trim() || !formData.password?.trim()) {
           setError('Vui lòng nhập đầy đủ username và password');
+          setIsLoading(false);
           return;
         }
 
@@ -41,7 +60,16 @@ const Login = ({ onLogin }) => {
         });
 
         if (result.success) {
-          onLogin(result.data);
+          const user = result.data;
+          
+          // Kiểm tra quyền admin nếu đang ở trang admin
+          if (isAdminMode && user.role !== 'admin') {
+            setError('Bạn không có quyền truy cập vào trang quản trị');
+            setIsLoading(false);
+            return;
+          }
+          
+          onLogin(user);
         } else {
           setError(result.error);
         }
@@ -90,6 +118,11 @@ const Login = ({ onLogin }) => {
   };
 
   const toggleMode = () => {
+    // Không cho phép chuyển sang chế độ đăng ký nếu đang ở trang admin
+    if (isAdminMode) {
+      return;
+    }
+    
     setIsLoginMode(!isLoginMode);
     setFormData({
       username: '',
@@ -107,12 +140,18 @@ const Login = ({ onLogin }) => {
         <div className="login-card">
           <div className="login-header">
             <h2 className="login-title">
-              {isLoginMode ? 'Đăng nhập hệ thống' : 'Đăng ký tài khoản'}
+              {isAdminMode 
+                ? 'Đăng nhập quản trị'
+                : (isLoginMode ? 'Đăng nhập hệ thống' : 'Đăng ký tài khoản')
+              }
             </h2>
             <p className="login-subtitle">
-              {isLoginMode 
-                ? 'Chatbot AI - Học viện Kỹ thuật Mật mã' 
-                : 'Tạo tài khoản mới để sử dụng hệ thống'
+              {isAdminMode
+                ? 'Quản trị hệ thống Chatbot - Học viện Kỹ thuật Mật mã'
+                : (isLoginMode 
+                  ? 'Chatbot AI - Học viện Kỹ thuật Mật mã' 
+                  : 'Tạo tài khoản mới để sử dụng hệ thống'
+                )
               }
             </p>
           </div>
@@ -192,17 +231,20 @@ const Login = ({ onLogin }) => {
             </button>
           </form>
 
+          {/* Form Switch - Chỉ hiển thị khi KHÔNG ở chế độ admin và ở chế độ đăng nhập */}
           <div className="form-switch">
-            <p>
-              {isLoginMode ? 'Chưa có tài khoản?' : 'Đã có tài khoản?'}
-              <button 
-                type="button"
-                onClick={toggleMode}
-                className="switch-mode-btn"
-              >
-                {isLoginMode ? 'Đăng ký ngay' : 'Đăng nhập'}
-              </button>
-            </p>
+            {!isAdminMode && (
+              <p>
+                {isLoginMode ? 'Chưa có tài khoản?' : 'Đã có tài khoản?'}
+                <button 
+                  type="button"
+                  onClick={toggleMode}
+                  className="switch-mode-btn"
+                >
+                  {isLoginMode ? 'Đăng ký ngay' : 'Đăng nhập'}
+                </button>
+              </p>
+            )}
           </div>
 
           <div className="login-footer">

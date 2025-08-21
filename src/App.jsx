@@ -1,17 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AppBar from './components/AppBar';
 import ChatMessages from './components/ChatMessages';
 import ChatInput from './components/ChatInput';
 import WelcomeScreen from './components/WelcomeScreen';
 import Login from './components/Login';
 import FileChat from './components/FileChat';
+import UsageStats from './components/UsageStats';
 import chatService from './services/chatService';
 import authService from './services/authService';
 import { v4 as uuidv4 } from 'uuid';
-import { FiMenu, FiX, FiFile, FiMessageSquare } from 'react-icons/fi';
+import { FiMenu, FiX } from 'react-icons/fi';
 import ConversationList from './components/ConversationList';
+import AdminDashboard from './components/admin/AdminDashboard';
+import './components/LoadingApp.css';
+import './components/StatsPanel.css';
 
-function App() {
+function ChatApp() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState(null);
@@ -20,6 +25,7 @@ function App() {
   const [conversations, setConversations] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [viewMode, setViewMode] = useState('chat'); // 'chat' or 'file-chat'
+  const [showStatsPanel, setShowStatsPanel] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Scroll to bottom when new messages arrive
@@ -30,6 +36,19 @@ function App() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Listen for the showRateLimitStats event
+  useEffect(() => {
+    const handleShowStats = () => {
+      setShowStatsPanel(true);
+    };
+    
+    window.addEventListener('showRateLimitStats', handleShowStats);
+    
+    return () => {
+      window.removeEventListener('showRateLimitStats', handleShowStats);
+    };
+  }, []);
 
   // Check authentication status on app start
   useEffect(() => {
@@ -158,6 +177,12 @@ function App() {
     if (userData && userData.id) {
       console.log('Login successful, user:', userData);
       setUser(userData);
+      
+      // If user is admin, redirect to admin dashboard
+      if (userData.role === 'admin') {
+        window.location.href = '/admin';
+      }
+      
       setError(null);
     } else {
       console.error('Login failed or invalid user data:', userData);
@@ -236,22 +261,56 @@ function App() {
         setMessages((prev) => [...prev, botMessage]);
         setError(null);
       } else {
-        throw new Error(response.error || 'Failed to send message');
+        // Kiểm tra nếu là lỗi rate limit (status code 429)
+        if (response.statusCode === 429 || response.error?.includes('giới hạn') || response.error?.includes('limit')) {
+          // Hiển thị thông báo giới hạn tốc độ chính xác từ API
+          const rateLimitMessage = {
+            id: uuidv4(),
+            content: `⚠️ ${response.message || response.error || 'Bạn đã vượt quá giới hạn gửi tin nhắn. Vui lòng thử lại sau.'}`,
+            sender: 'bot',
+            timestamp: new Date().toISOString(),
+            isError: true,
+            isRateLimit: true
+          };
+          setMessages((prev) => [...prev, rateLimitMessage]);
+          
+          // Không hiển thị bảng thống kê sử dụng
+          // window.dispatchEvent(new Event('showRateLimitStats'));
+          
+          setError(response.message || response.error);
+        } else {
+          throw new Error(response.error || 'Failed to send message');
+        }
       }
     } catch (error) {
       console.error('Error sending message:', error.message);
       let errorText = 'Xin lỗi, có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại sau.';
-      if (error.message.includes('Invalid ID format')) {
+      let isRateLimit = false;
+      
+      // Kiểm tra lỗi rate limit
+      if (error.response && error.response.status === 429) {
+        errorText = error.response.data?.message || 'Bạn đã vượt quá giới hạn gửi tin nhắn. Vui lòng thử lại sau.';
+        isRateLimit = true;
+        // Không hiển thị bảng thống kê sử dụng
+        // window.dispatchEvent(new Event('showRateLimitStats'));
+      } else if (error.message.includes('Invalid ID format')) {
         errorText = 'Lỗi: ID hội thoại không hợp lệ. Vui lòng thử lại.';
       } else if (error.message.includes('Unprocessable')) {
         errorText = 'Lỗi: Dữ liệu gửi không hợp lệ. Vui lòng kiểm tra lại.';
+      } else if (error.message.includes('giới hạn') || error.message.includes('limit')) {
+        errorText = error.message;
+        isRateLimit = true;
+        // Không hiển thị bảng thống kê sử dụng
+        // window.dispatchEvent(new Event('showRateLimitStats'));
       }
+      
       const errorMessage = {
         id: uuidv4(),
         content: errorText,
         sender: 'bot',
         timestamp: new Date().toISOString(),
         isError: true,
+        isRateLimit: isRateLimit
       };
       setMessages((prev) => [...prev, errorMessage]);
       setError(errorText);
@@ -387,6 +446,23 @@ function App() {
                 {error}
               </div>
             )}
+            
+            {/* Rate Limit Stats Panel */}
+            {showStatsPanel && (
+              <div className="stats-panel-container">
+                <div className="stats-panel-header">
+                  <h3>Thống kê sử dụng</h3>
+                  <button 
+                    className="close-button"
+                    onClick={() => setShowStatsPanel(false)}
+                  >
+                    <FiX />
+                  </button>
+                </div>
+                <UsageStats />
+              </div>
+            )}
+            
             <div 
               className="chat-area flex-1 overflow-y-auto" 
               style={{ 
@@ -433,6 +509,59 @@ function App() {
       </div>
       )}
     </div>
+  );
+}
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  
+  useEffect(() => {
+    // Check if user is logged in and get role
+    const checkAuth = async () => {
+      setIsCheckingAuth(true);
+      if (authService.isAuthenticated()) {
+        const currentUser = authService.getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+        }
+      }
+      setIsCheckingAuth(false);
+    };
+    
+    checkAuth();
+  }, []);
+
+  const handleLogin = (userData) => {
+    if (userData && userData.id) {
+      console.log('App: Login successful, user:', userData);
+      setUser(userData);
+      
+      // If user is admin, redirect to admin dashboard
+      if (userData.role === 'admin') {
+        // Already on admin page, no need to redirect
+        console.log('User is admin, staying on admin page');
+      }
+    } else {
+      console.error('App: Login failed or invalid user data:', userData);
+    }
+  };
+
+  // Show loading indicator while checking authentication
+  if (isCheckingAuth) {
+    return <div className="loading-app">Đang tải...</div>;
+  }
+
+  // Redirect based on user role
+  return (
+    <Router>
+      <Routes>
+        <Route path="/admin/*" element={
+          user && user.role === 'admin' ? <AdminDashboard /> : <Login onLogin={handleLogin} adminMode={true} />
+        } />
+        <Route path="/*" element={<ChatApp />} />
+      </Routes>
+    </Router>
   );
 }
 

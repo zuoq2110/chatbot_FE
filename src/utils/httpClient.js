@@ -1,7 +1,7 @@
 import constants from './constants';
 import * as jwtHelper from './jwtHelper';
 
-const { API_BASE_URL, API_ENDPOINTS } = constants;
+const { API_BASE_URL } = constants;
 
 /**
  * HTTP Client với tính năng xử lý JWT token
@@ -58,23 +58,48 @@ class HttpClient {
     // Kiểm tra xem url có phải là full URL không
     const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
     
-    // Bỏ qua việc thêm token cho endpoints không cần authentication
-    const isAuthEndpoint = [
-      API_ENDPOINTS.LOGIN,
-      API_ENDPOINTS.REFRESH_TOKEN,
-      API_ENDPOINTS.CREATE_USER
-    ].some(endpoint => url.includes(endpoint));
+    // Debug authentication
+    console.group('HttpClient Request Debug');
+    console.log('Request URL:', fullUrl);
+    console.log('Request method:', options.method || 'GET');
+    console.log('Request options:', {...options, body: options.body instanceof FormData ? 'FormData object' : options.body});
+    
+    // Kiểm tra xem có phải là FormData không
+    if (options.body instanceof FormData) {
+      console.log('Request contains FormData');
+      const formDataEntries = [];
+      for (let [key, value] of options.body.entries()) {
+        formDataEntries.push({
+          key,
+          value: value instanceof File ? 
+            `File: ${value.name}, type: ${value.type}, size: ${value.size}` : 
+            value
+        });
+      }
+      console.log('FormData entries:', formDataEntries);
+    }
     
     // Clone options để tránh mutation
     const requestOptions = { ...options };
     requestOptions.headers = { ...requestOptions.headers };
     
-    // Thêm JWT token vào header nếu không phải auth endpoint
-    if (!isAuthEndpoint) {
-      const accessToken = jwtHelper.getAccessToken();
-      
-      // Kiểm tra token hết hạn trước khi gửi request
-      if (accessToken && jwtHelper.isTokenExpired(accessToken)) {
+    // Thêm JWT token vào header cho tất cả request
+    const accessToken = jwtHelper.getAccessToken();
+    console.log('Access Token exists:', !!accessToken);
+    
+    if (accessToken) {
+      console.log('Token expired?', jwtHelper.isTokenExpired(accessToken));
+      try {
+        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+        console.log('Token payload:', payload);
+        console.log('Token expiry:', new Date(payload.exp * 1000).toLocaleString());
+      } catch (e) {
+        console.error('Error decoding token', e);
+      }
+    }
+    
+    // Kiểm tra token hết hạn trước khi gửi request
+    if (accessToken && jwtHelper.isTokenExpired(accessToken)) {
         console.log('Access token expired, attempting to refresh before request');
         
         // Nếu đang refresh token, đưa request vào queue
@@ -116,16 +141,21 @@ class HttpClient {
         }
       } else if (accessToken) {
         // Sử dụng token hiện tại nếu chưa hết hạn
+        console.log('Using existing token');
         requestOptions.headers['Authorization'] = `Bearer ${accessToken}`;
+      } else {
+        console.warn('No access token available for request');
       }
-    }
+    
+    console.log('Final request headers:', requestOptions.headers);
+    console.groupEnd();
     
     try {
       // Thực hiện request
       const response = await fetch(fullUrl, requestOptions);
       
       // Xử lý token hết hạn (401 Unauthorized)
-      if (response.status === 401 && !isAuthEndpoint) {
+      if (response.status === 401) {
         // Nếu đang refresh token, đưa request vào queue
         if (this.isRefreshing) {
           try {
@@ -170,9 +200,13 @@ class HttpClient {
         // Kiểm tra xem response có phải JSON không
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
-          return await response.json();
+          const jsonData = await response.json();
+          console.log('Response JSON data:', jsonData);
+          return jsonData;
         }
-        return await response.text();
+        const textData = await response.text();
+        console.log('Response text data:', textData);
+        return textData;
       }
       
       // Xử lý lỗi HTTP
@@ -183,7 +217,13 @@ class HttpClient {
         errorData = { message: response.statusText };
       }
       
-      throw new Error(errorData.detail || errorData.message || `HTTP error! status: ${response.status}`);
+      const error = new Error(errorData.detail || errorData.message || `HTTP error! status: ${response.status}`);
+      error.response = {
+        status: response.status,
+        statusText: response.statusText,
+        data: errorData
+      };
+      throw error;
     } catch (error) {
       console.error('Request failed:', error);
       throw error;
@@ -192,7 +232,15 @@ class HttpClient {
   
   // Helper methods
   async get(url, options = {}) {
-    return this.request(url, { method: 'GET', ...options });
+    console.log(`HttpClient.get: ${url}`);
+    try {
+      const result = await this.request(url, { method: 'GET', ...options });
+      console.log(`HttpClient.get result for ${url}:`, result);
+      return result;
+    } catch (error) {
+      console.error(`HttpClient.get error for ${url}:`, error);
+      throw error;
+    }
   }
   
   async post(url, data = {}, options = {}) {
@@ -224,6 +272,13 @@ class HttpClient {
   }
   
   async upload(url, formData, options = {}) {
+    console.log('Upload method called with FormData:', formData);
+    // Log FormData contents for debugging
+    for (let [key, value] of formData.entries()) {
+      console.log(`FormData field: ${key}, value:`, value instanceof File ? `File: ${value.name}, size: ${value.size}` : value);
+    }
+    
+    // Không chỉ định Content-Type để trình duyệt tự động xử lý boundary
     return this.request(url, {
       method: 'POST',
       body: formData,

@@ -77,7 +77,17 @@ class AuthService {
       }
 
       // Lưu JWT tokens
+      console.log('Saving tokens from login response');
       jwtHelper.saveTokens(data.access_token, data.refresh_token);
+
+      // Debug token info
+      try {
+        const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+        console.log('Token payload:', payload);
+        console.log('Token expiry:', new Date(payload.exp * 1000).toLocaleString());
+      } catch (e) {
+        console.error('Error decoding token', e);
+      }
 
       // Lấy thông tin người dùng từ API (sẽ sử dụng httpClient với khả năng refresh token)
       const userResponse = await this.getCurrentUserInfo();
@@ -94,12 +104,27 @@ class AuthService {
         throw new Error('Invalid or missing user ID in user response');
       }
 
+      // Lấy role từ response nếu có, nếu không thì kiểm tra bằng username
+      let userRole = user.role;
+      
+      // Fallback nếu API không trả về role
+      if (!userRole) {
+        // Check if user is admin (mocked for development)
+        const isAdmin = user.username === 'admin' || 
+                        user.username === 'root' || 
+                        user.email === 'admin@kma.edu.vn';
+        
+        userRole = isAdmin ? 'admin' : 'user';
+        console.log('Role not provided by API, using fallback detection:', userRole);
+      }
+
       const userInfo = {
         id: userId,
         username: user.username,
         name: user.student_name || user.username,
         studentCode: user.student_code,
         studentClass: user.student_class,
+        role: userRole,
         loginTime: new Date().toISOString()
       };
 
@@ -177,9 +202,24 @@ class AuthService {
 
   async getCurrentUserInfo() {
     try {
+      console.group('getCurrentUserInfo Debug');
       const accessToken = jwtHelper.getAccessToken();
       
+      console.log('Access Token exists:', !!accessToken);
+      if (accessToken) {
+        try {
+          const payload = JSON.parse(atob(accessToken.split('.')[1]));
+          console.log('Token payload:', payload);
+          console.log('Token expiry:', new Date(payload.exp * 1000).toLocaleString());
+          console.log('Is expired:', jwtHelper.isTokenExpired(accessToken));
+        } catch (e) {
+          console.error('Error decoding token', e);
+        }
+      }
+      
       if (!accessToken) {
+        console.log('No access token found');
+        console.groupEnd();
         return {
           success: false,
           error: 'Không có token đăng nhập'
@@ -187,7 +227,10 @@ class AuthService {
       }
       
       // Sử dụng httpClient để tự động xử lý refresh token nếu cần
+      console.log('Calling GET_ME endpoint:', API_ENDPOINTS.GET_ME);
       const result = await httpClient.get(API_ENDPOINTS.GET_ME);
+      console.log('GET_ME response:', result);
+      console.groupEnd();
       
       return {
         success: true,
