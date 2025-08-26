@@ -55,6 +55,13 @@ export const API_ENDPOINTS = {
   ADMIN_UPLOAD_TRAINING_FILE: '/api/admin/rag/upload-training-file',
   ADMIN_DELETE_TRAINING_FILE: '/api/admin/rag/delete-training-file',
   ADMIN_REBUILD_RAG_INDEX: '/api/admin/rag/rebuild-rag-index',
+  ADMIN_CREATE_FOLDER: '/api/admin/rag/create-folder',
+  ADMIN_CREATE_SUBFOLDER: '/api/admin/rag/create-subfolder',
+  ADMIN_DELETE_FOLDER: '/api/admin/rag/delete-folder',
+  ADMIN_LIST_FOLDERS: '/api/admin/rag/list-folders',
+  ADMIN_RENAME_FOLDER: '/api/admin/rag/rename-folder',
+  ADMIN_EDIT_FILE: '/api/admin/rag/edit-file',
+  ADMIN_DOWNLOAD_FILE: '/api/admin/rag/download-file',
   
   // Settings endpoints
   SETTINGS: '/api/settings',
