@@ -1,7 +1,5 @@
-import constants from './constants';
+import { API_BASE_URL } from './constants';
 import * as jwtHelper from './jwtHelper';
-
-const { API_BASE_URL } = constants;
 
 /**
  * HTTP Client với tính năng xử lý JWT token

@@ -1,9 +1,9 @@
-import { API_ENDPOINTS } from '../utils/constants';
+import constants from '../utils/constants';
 // Uncomment when integrating with real API
 import httpClient from '../utils/httpClient';
 
-// No need to destructure anymore
-// const { API_ENDPOINTS } = constants;
+// Uncomment when integrating with real API
+const { API_ENDPOINTS } = constants;
 
 class AdminService {
   // User Management
@@ -306,15 +306,11 @@ class AdminService {
   }
 
   // RAG Management Methods
-  async getTrainingFiles(folder = null) {
+  async getTrainingFiles() {
     try {
-      let url = API_ENDPOINTS.ADMIN_LIST_TRAINING_FILES;
-      if (folder) {
-        url = `${url}?folder=${encodeURIComponent(folder)}`;
-      }
-      console.log('Calling API:', url);
-      const response = await httpClient.get(url);
-      console.log('Raw API response for files:', response);
+      console.log('Calling API:', API_ENDPOINTS.ADMIN_LIST_TRAINING_FILES);
+      const response = await httpClient.get(API_ENDPOINTS.ADMIN_LIST_TRAINING_FILES);
+      console.log('Raw API response:', response);
       return response || { success: false, message: 'No response data' };
     } catch (error) {
       console.error('Error fetching training files:', error);
@@ -329,16 +325,11 @@ class AdminService {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      // folder được truyền dưới dạng query parameter, không phải trong FormData
+      formData.append('folder', folder);
       
-      // Xây dựng URL với query parameter folder
-      const url = `${API_ENDPOINTS.ADMIN_UPLOAD_TRAINING_FILE}?folder=${encodeURIComponent(folder)}`;
-      
-      console.log('Uploading file to:', url);
-      console.log('File will be uploaded to folder:', folder);
-      
+      console.log('Uploading file to:', API_ENDPOINTS.ADMIN_UPLOAD_TRAINING_FILE);
       // Sử dụng phương thức upload thay vì post, và KHÔNG thiết lập header Content-Type
-      const response = await httpClient.upload(url, formData);
+      const response = await httpClient.upload(API_ENDPOINTS.ADMIN_UPLOAD_TRAINING_FILE, formData);
       
       console.log('Upload response:', response);
       return response || { success: false, message: 'No response data' };
@@ -370,7 +361,7 @@ class AdminService {
   async createFolder(folderName) {
     try {
       console.log('Creating folder:', folderName);
-      const response = await httpClient.post(API_ENDPOINTS.ADMIN_CREATE_FOLDER, { folder_name: folderName });
+      const response = await httpClient.post(API_ENDPOINTS.ADMIN_CREATE_FOLDER, { folderName });
       console.log('Create folder response:', response);
       return response || { success: false, message: 'No response data' };
     } catch (error) {
@@ -381,37 +372,11 @@ class AdminService {
       };
     }
   }
-  
-  async createSubfolder(parentFolder, subfolderName) {
+
+  async deleteFolder(folderName) {
     try {
-      console.log('Creating subfolder:', subfolderName, 'in parent folder:', parentFolder);
-      const response = await httpClient.post(API_ENDPOINTS.ADMIN_CREATE_SUBFOLDER, { 
-        parent_folder: parentFolder, 
-        subfolder_name: subfolderName 
-      });
-      console.log('Create subfolder response:', response);
-      return response || { success: false, message: 'No response data' };
-    } catch (error) {
-      console.error('Error creating subfolder:', error);
-      return {
-        success: false,
-        message: error.message || 'Failed to create subfolder'
-      };
-    }
-  }
-  
-  async deleteFolder(folderName, deleteFiles = true) {
-    try {
-      // Fix for folder names with forward slashes - replace with custom separator
-      // Khi gửi đến server, chúng ta sẽ sử dụng URL encoding cho cả đường dẫn
-      console.log('Original folder name to delete:', folderName);
-      
-      // Tạo URL bằng cách nối cơ sở và đường dẫn, sau đó mã hóa toàn bộ
-      const baseUrl = API_ENDPOINTS.ADMIN_DELETE_FOLDER;
-      const encodedFolderName = encodeURIComponent(folderName);
-      const url = `${baseUrl}/${encodedFolderName}?delete_files=${deleteFiles}`;
-      
-      console.log('Deleting folder with URL:', url);
+      const url = `${API_ENDPOINTS.ADMIN_DELETE_FOLDER}/${encodeURIComponent(folderName)}`;
+      console.log('Deleting folder:', url);
       const response = await httpClient.delete(url);
       console.log('Delete folder response:', response);
       return response || { success: false, message: 'No response data' };
@@ -423,40 +388,7 @@ class AdminService {
       };
     }
   }
-  
-  async getFolders() {
-    try {
-      console.log('Fetching folders');
-      const response = await httpClient.get(API_ENDPOINTS.ADMIN_LIST_FOLDERS);
-      console.log('Folders response:', response);
-      return response || { success: false, message: 'No response data' };
-    } catch (error) {
-      console.error('Error fetching folders:', error);
-      return {
-        success: false,
-        message: error.message || 'Failed to fetch folders'
-      };
-    }
-  }
-  
-  async renameFolder(oldName, newName) {
-    try {
-      console.log('Renaming folder:', oldName, 'to', newName);
-      const response = await httpClient.put(API_ENDPOINTS.ADMIN_RENAME_FOLDER, { 
-        old_name: oldName, 
-        new_name: newName 
-      });
-      console.log('Rename folder response:', response);
-      return response || { success: false, message: 'No response data' };
-    } catch (error) {
-      console.error('Error renaming folder:', error);
-      return {
-        success: false,
-        message: error.message || 'Failed to rename folder'
-      };
-    }
-  }
-  
+
   async rebuildRagIndex() {
     try {
       console.log('Rebuilding RAG index at:', API_ENDPOINTS.ADMIN_REBUILD_RAG_INDEX);
@@ -468,44 +400,6 @@ class AdminService {
       return {
         success: false,
         message: error.message || 'Failed to rebuild RAG index'
-      };
-    }
-  }
-  
-  async editFile(filePath, content) {
-    try {
-      console.log('Editing file:', filePath);
-      const response = await httpClient.put(API_ENDPOINTS.ADMIN_EDIT_FILE, { 
-        file_path: filePath, 
-        content: content 
-      });
-      console.log('Edit file response:', response);
-      return response || { success: false, message: 'No response data' };
-    } catch (error) {
-      console.error('Error editing file:', error);
-      return {
-        success: false,
-        message: error.message || 'Failed to edit file'
-      };
-    }
-  }
-  
-  async downloadFile(filePath) {
-    try {
-      console.log('Downloading file:', filePath);
-      // Mã hóa đường dẫn file để tránh lỗi với các ký tự đặc biệt
-      const encodedFilePath = encodeURIComponent(filePath);
-      const url = `${API_ENDPOINTS.ADMIN_DOWNLOAD_FILE}/${encodedFilePath}`;
-      
-      // Đối với tải tệp, chúng ta cần sử dụng một cách tiếp cận khác
-      // so với các yêu cầu API thông thường
-      window.open(url, '_blank');
-      return { success: true };
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      return {
-        success: false,
-        message: error.message || 'Failed to download file'
       };
     }
   }

@@ -13,6 +13,297 @@
   margin-bottom: 20px;
 }
 
+/* Layout mới với panel trái-phải */
+.container {
+  display: flex;
+  gap: 20px;
+}
+
+.folder-panel {
+  width: 250px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  border: 1px solid #e0e0e0;
+  padding: 15px;
+  flex-shrink: 0;
+}
+
+.content-panel {
+  flex: 1;
+}
+
+/* Phần quản lý thư mục */
+.folder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.folder-header h3 {
+  margin: 0;
+  color: #2a3f54;
+}
+
+.new-folder-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+}
+
+.new-folder-button:hover {
+  background-color: #388e3c;
+}
+
+.new-folder-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.new-folder-input input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.new-folder-input button {
+  padding: 6px 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.new-folder-input button:last-child {
+  background-color: #f44336;
+}
+
+.new-subfolder-input {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+  background-color: #f0f8ff;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #b8daff;
+}
+
+.subfolder-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.subfolder-info input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.subfolder-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.subfolder-actions button {
+  padding: 6px 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.subfolder-actions button:last-child {
+  background-color: #f44336;
+}
+
+.folder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.folder-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.subfolder-list {
+  margin-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.subfolder-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f0f8ff;
+  border-radius: 4px;
+  padding: 8px 10px;
+  cursor: pointer;
+  border: 1px solid #e0e0e0;
+}
+
+.subfolder-item:hover {
+  background-color: #e6f2ff;
+}
+
+.subfolder-item.selected {
+  background-color: #e3f2fd;
+  border-color: #90caf9;
+}
+
+.subfolder-indent {
+  width: 15px;
+  display: inline-block;
+}
+
+.folder-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.folder-item:hover {
+  background-color: #e8f5e9;
+}
+
+.folder-item.selected {
+  background-color: #e8f5e9;
+  border-left: 3px solid #4caf50;
+}
+
+.folder-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+}
+
+.folder-files-count {
+  margin-left: 5px;
+  font-size: 0.8em;
+  color: #666;
+}
+
+.folder-expand-icon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.folder-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.delete-folder-button,
+.rename-folder-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: none;
+  padding: 3px;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.delete-folder-button {
+  color: #f44336;
+}
+
+.rename-folder-button {
+  color: #2196f3;
+}
+
+.folder-item:hover .delete-folder-button,
+.folder-item:hover .rename-folder-button {
+  opacity: 1;
+}
+
+.delete-folder-button:hover {
+  background-color: #ffcdd2;
+}
+
+.rename-folder-button:hover {
+  background-color: #e3f2fd;
+}
+
+.folder-rename-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  width: 100%;
+}
+
+.folder-rename-input input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.folder-rename-input button {
+  padding: 3px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.folder-rename-input button:first-of-type {
+  background-color: #4caf50;
+  color: white;
+}
+
+.folder-rename-input button:last-of-type {
+  background-color: #f44336;
+  color: white;
+}
+
+/* Folder select trong phần upload */
+.folder-select {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.folder-select select {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: white;
+  min-width: 150px;
+}
+
 .upload-section {
   background-color: #f9f9f9;
   padding: 20px;
@@ -189,6 +480,47 @@
   background-color: #d32f2f;
 }
 
+.edit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.edit-button:hover {
+  background-color: #0b7dda;
+}
+
+.download-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.download-button:hover {
+  background-color: #45a049;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+}
+
 .loading, .no-files {
   padding: 20px;
   text-align: center;
@@ -237,4 +569,80 @@
   .file-table td:nth-child(3) {
     display: none;
   }
+}
+
+/* Modal cho chỉnh sửa file */
+.edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.edit-modal {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  width: 80%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.edit-modal h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #2a3f54;
+}
+
+.file-content-editor {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: monospace;
+  margin-bottom: 15px;
+  resize: vertical;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.save-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.save-button:hover {
+  background-color: #45a049;
+}
+
+.cancel-button {
+  padding: 8px 16px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background-color: #d32f2f;
 }
