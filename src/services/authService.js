@@ -16,7 +16,7 @@ class AuthService {
           },
           body: JSON.stringify({
             username: userData.username,
-            emai: userData.email,
+            email: userData.email,
             password: userData.password,
             student_code: userData.studentCode,
             student_name: userData.studentName,
