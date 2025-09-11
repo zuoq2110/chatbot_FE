@@ -139,6 +139,7 @@ const Login = ({ onLogin, adminMode = false }) => {
     setIsLoginMode(!isLoginMode);
     setFormData({
       username: "",
+      email: "",
       password: "",
       confirmPassword: "",
     });
