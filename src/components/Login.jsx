@@ -191,21 +191,23 @@ const Login = ({ onLogin, adminMode = false }) => {
                 required
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">
-                Email *
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email || ""}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="Nhập email..."
-                required
-              />
-            </div>
+            {!isLoginMode && (
+              <div className="form-group">
+                <label htmlFor="email" className="form-label">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email || ""}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  placeholder="Nhập email..."
+                  required={!isLoginMode}
+                />
+              </div>
+            )}
             <div className="form-group">
               <label htmlFor="password" className="form-label">
                 Mật khẩu
