@@ -20,7 +20,9 @@ import ConversationList from "./components/ConversationList";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import "./components/LoadingApp.css";
 import "./components/StatsPanel.css";
+import constants from "./utils/constants";
 
+const { API_BASE_URL } = constants;
 function ChatApp() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -217,7 +219,7 @@ function ChatApp() {
   const handleSummaryClick = async () => {
     try {
       const res = await fetch(
-        `/auth/generate_sso_token?user_id=${user.id}&email=${user.email}`
+        `${API_BASE_URL}/auth/generate_sso_token?user_id=${user.id}&email=${user.email}`
       );
       const data = await res.json();
       const token = data.token;
