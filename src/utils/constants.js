@@ -9,7 +9,7 @@ export const API_ENDPOINTS = {
   GET_USER: "/api/users",
 
   // Auth endpoints
-  LOGIN: "/api/users/login",
+  LOGIN: "/api/auth/login",
   REFRESH_TOKEN: "/api/auth/refresh",
   GET_ME: "/api/auth/me",
 
