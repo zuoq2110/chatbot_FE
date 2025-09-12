@@ -1,9 +1,20 @@
 import React from "react";
 import "./AppBar.css";
-import { FiFile, FiMessageSquare, FiSettings } from "react-icons/fi";
+import {
+  FiFile,
+  FiMessageSquare,
+  FiSettings,
+  FiAlignLeft,
+} from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-const AppBar = ({ user, onLogout, viewMode, onSwitchMode }) => {
+const AppBar = ({
+  user,
+  onLogout,
+  viewMode,
+  onSwitchMode,
+  handleSummaryClick,
+}) => {
   return (
     <div className="app-bar">
       <div className="app-bar-content">
@@ -24,6 +35,7 @@ const AppBar = ({ user, onLogout, viewMode, onSwitchMode }) => {
             >
               <FiMessageSquare /> Chat
             </button>
+
             <button
               className={`mode-btn ${viewMode === "file-chat" ? "active" : ""}`}
               onClick={() => onSwitchMode("file-chat")}
@@ -31,13 +43,23 @@ const AppBar = ({ user, onLogout, viewMode, onSwitchMode }) => {
             >
               <FiFile /> Tài liệu
             </button>
+
+            {/* Nút Tóm tắt văn bản mới */}
+            <button
+              className={`mode-btn ${
+                viewMode === "text-summary" ? "active" : ""
+              }`}
+              onClick={() => handleSummaryClick()}
+              title="Tóm tắt văn bản"
+            >
+              <FiAlignLeft /> Tóm tắt
+            </button>
           </div>
 
           {user ? (
             <div className="user-info">
               <span className="welcome-text">Xin chào, {user.name}!</span>
 
-              {/* Admin Dashboard Link - only show for admin users */}
               {user.role === "admin" && (
                 <Link to="/admin" className="admin-link">
                   <FiSettings /> Quản trị
