@@ -222,7 +222,7 @@ function ChatApp() {
       const data = await res.json();
       const token = data.token;
       // redirect sang WebUI với token
-      window.location.href = `https://localhost:8080//sso?token=${token}`;
+      window.location.href = `https://localhost:8080/sso?token=${token}`;
     } catch (err) {
       console.error("Error generating SSO token", err);
     }

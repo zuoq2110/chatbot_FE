@@ -141,6 +141,7 @@ class AuthService {
         studentClass: user.student_class,
         role: userRole,
         loginTime: new Date().toISOString(),
+        email: user.email,
       };
 
       // Lưu thông tin user vào localStorage
