@@ -219,7 +219,7 @@ function ChatApp() {
   const handleSummaryClick = async () => {
     try {
       const res = await fetch(
-        `${API_BASE_URL}/auth/generate_sso_token?user_id=${user.id}&email=${user.email}`
+        `${API_BASE_URL}/api/auth/generate_sso_token?user_id=${user.id}&email=${user.email}`
       );
       const data = await res.json();
       const token = data.token;
