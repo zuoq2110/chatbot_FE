@@ -206,6 +206,7 @@ export const Z_INDEX = {
 // Export all constants as default
 const constants = {
   API_BASE_URL,
+  WEBUI_URL,
   API_ENDPOINTS,
   MESSAGE_TYPES,
   MESSAGE_SENDERS,
