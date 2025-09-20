@@ -22,7 +22,7 @@ import "./components/LoadingApp.css";
 import "./components/StatsPanel.css";
 import constants from "./utils/constants";
 
-const { API_BASE_URL } = constants;
+const { API_BASE_URL, WEBUI_URL } = constants;
 function ChatApp() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -224,7 +224,7 @@ function ChatApp() {
       const data = await res.json();
       const token = data.token;
       // redirect sang WebUI với token
-      window.location.href = `http://123.20.200.213:8080/sso?token=${token}`;
+      window.location.href = `${WEBUI_URL}/sso?token=${token}`;
     } catch (err) {
       console.error("Error generating SSO token", err);
     }

@@ -1,7 +1,7 @@
 // API Base URL
 export const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:3434";
-
+export const WEBUI_URL = process.env.WEBUI_URL || "http://localhost:8080";
 // API endpoints
 export const API_ENDPOINTS = {
   // User endpoints (theo backend routing)
