@@ -125,7 +125,7 @@ const chatService = {
   },
   
   // Quick chat without saving conversation
-  sendQuickMessage: async (message) => {
+  sendQuickMessage: async (message, department = null) => {
     try {
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
       const headers = {
@@ -137,6 +137,7 @@ const chatService = {
 
       const response = await httpClient.post(API_ENDPOINTS.QUICK_CHAT, {
         content: message,
+        department: department
       }, { headers });
 
       if (response.statusCode === 200 && response.data) {
@@ -261,9 +262,9 @@ const chatService = {
   },
 
   // Send message to a conversation and get AI response
-  sendMessage: async (conversationId, message) => {
+  sendMessage: async (conversationId, message, department = null) => {
     try {
-      console.log(conversationId, message);
+      console.log(conversationId, message, department);
       // Get current user info for context
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
       
@@ -281,6 +282,7 @@ const chatService = {
         {
           content: message,
           is_user: true,
+          department: department
         },
         { headers }
       );

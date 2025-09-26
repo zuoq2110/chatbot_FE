@@ -241,7 +241,7 @@ function ChatApp() {
     setIsSidebarOpen(false);
   };
 
-  const handleSendMessage = async (messageText) => {
+  const handleSendMessage = async (messageText, department = null) => {
     if (!messageText.trim()) {
       console.error("Cannot send message: Missing message text");
       setError("Không thể gửi tin nhắn: Nội dung trống.");
@@ -253,6 +253,7 @@ function ChatApp() {
       content: messageText,
       sender: "user",
       timestamp: new Date().toISOString(),
+      department: department,
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -289,7 +290,8 @@ function ChatApp() {
       );
       const response = await chatService.sendMessage(
         currentConversationId,
-        messageText
+        messageText,
+        department
       );
       if (response.success) {
         const botMessage = {
@@ -358,6 +360,18 @@ function ChatApp() {
         isRateLimit = true;
         // Không hiển thị bảng thống kê sử dụng
         // window.dispatchEvent(new Event('showRateLimitStats'));
+      } else if (error.message.includes("Network Error")) {
+        errorText =
+          "Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet và thử lại.";
+      } else if (error.message.includes("timeout")) {
+        errorText = "Yêu cầu bị hết thời gian chờ. Vui lòng thử lại sau.";
+      } else {
+        // Sử dụng thông báo lỗi chi tiết từ error.message hoặc response
+        errorText =
+          error.response?.data?.detail ||
+          error.response?.data?.message ||
+          error.message ||
+          "Có lỗi không xác định xảy ra. Vui lòng thử lại sau.";
       }
 
       const errorMessage = {
