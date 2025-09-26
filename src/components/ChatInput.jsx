@@ -7,19 +7,30 @@ const ChatInput = ({
   onVoiceInput, 
   onFileUpload,
   disabled, 
-  placeholder = "Nhập tin nhắn của bạn..." 
+  placeholder = "Nhập tin nhắn của bạn...",
+  department = null,
+  onDepartmentChange = null
 }) => {
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedDepartment, setSelectedDepartment] = useState(department || 'chung');
   const recognitionRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (message.trim() && !disabled) {
-      onSendMessage(message);
+      // Send message with department info
+      onSendMessage(message, selectedDepartment);
       setMessage('');
+    }
+  };
+
+  const handleDepartmentChange = (dept) => {
+    setSelectedDepartment(dept);
+    if (onDepartmentChange) {
+      onDepartmentChange(dept);
     }
   };
 
@@ -104,6 +115,81 @@ const ChatInput = ({
 
   return (
     <div className="p-4">
+      {/* Department selector */}
+      <div className="mb-3">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Phạm vi truy vấn:
+        </label>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => handleDepartmentChange('chung')}
+            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+              selectedDepartment === 'chung'
+                ? 'bg-blue-500 text-white border-blue-500'
+                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+            }`}
+          >
+            Tất cả
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDepartmentChange('phongdaotao')}
+            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+              selectedDepartment === 'phongdaotao'
+                ? 'bg-green-500 text-white border-green-500'
+                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+            }`}
+          >
+            Đào tạo
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDepartmentChange('phongkhaothi')}
+            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+              selectedDepartment === 'phongkhaothi'
+                ? 'bg-orange-500 text-white border-orange-500'
+                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+            }`}
+          >
+            Khảo thí
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDepartmentChange('khoa')}
+            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+              selectedDepartment === 'khoa'
+                ? 'bg-purple-500 text-white border-purple-500'
+                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+            }`}
+          >
+            Khoa
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDepartmentChange('thongtinHVKTMM')}
+            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+              selectedDepartment === 'thongtinHVKTMM'
+                ? 'bg-red-500 text-white border-red-500'
+                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+            }`}
+          >
+            Thông tin HVKTMM
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDepartmentChange('viennghiencuuvahoptacphattrien')}
+            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+              selectedDepartment === 'viennghiencuuvahoptacphattrien'
+                ? 'bg-cyan-500 text-white border-cyan-500'
+                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+            }`}
+          >
+            Viện NC & HT PT
+          </button>
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="flex items-end space-x-3">
         <div className="flex-1 relative">
           <textarea
