@@ -73,14 +73,16 @@
 }
 
 /* Active model section */
-.active-model-section, .all-models-section {
+.active-model-section,
+.all-models-section {
   background-color: white;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   padding: 20px;
 }
 
-.active-model-section h3, .all-models-section h3 {
+.active-model-section h3,
+.all-models-section h3 {
   margin: 0 0 16px 0;
   font-size: 18px;
   font-weight: 600;
@@ -226,11 +228,39 @@
   margin-bottom: 8px;
 }
 
+.model-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .model-header h4 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: #1e293b;
+}
+
+.provider-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.provider-badge.ollama {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.provider-badge.gemini {
+  background-color: #fce7f3;
+  color: #9f1239;
+  border: 1px solid #fbcfe8;
 }
 
 .model-active-badge {
@@ -278,7 +308,8 @@
   gap: 8px;
 }
 
-.activate-button, .params-button {
+.activate-button,
+.params-button {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -327,7 +358,8 @@
   padding: 16px;
 }
 
-.upload-modal, .params-modal {
+.upload-modal,
+.params-modal {
   background-color: white;
   border-radius: 8px;
   width: 100%;
@@ -489,13 +521,15 @@
   background-color: #f8fafc;
 }
 
-.upload-button, .save-button {
+.upload-button,
+.save-button {
   background-color: #3b82f6;
   border: 1px solid #3b82f6;
   color: white;
 }
 
-.upload-button:hover, .save-button:hover {
+.upload-button:hover,
+.save-button:hover {
   background-color: #2563eb;
 }
 
@@ -510,8 +544,12 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Parameters modal */
@@ -523,7 +561,8 @@
   margin-bottom: 24px;
 }
 
-.params-section h3, .system-prompt-section h3 {
+.params-section h3,
+.system-prompt-section h3 {
   margin: 0 0 16px 0;
   font-size: 16px;
   font-weight: 600;
@@ -586,29 +625,374 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
+/* Alert Messages */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.alert svg {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.alert span {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.alert button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.alert button svg {
+  font-size: 18px;
+}
+
+.alert-error {
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.alert-error svg {
+  color: #dc2626;
+}
+
+.alert-error button:hover {
+  background-color: #fecaca;
+}
+
+.alert-success {
+  background-color: #d1fae5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.alert-success svg {
+  color: #10b981;
+}
+
+.alert-success button:hover {
+  background-color: #a7f3d0;
+}
+
+/* Reset Model Button */
+.reset-model-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.reset-model-button:hover {
+  background-color: #d97706;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.reset-model-button svg {
+  font-size: 18px;
+}
+
+/* Test Model Button */
+.test-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.test-button:hover {
+  background-color: #7c3aed;
+  transform: translateY(-1px);
+}
+
+.test-button svg {
+  font-size: 16px;
+}
+
+/* Test Modal */
+.test-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.test-form {
+  padding: 24px;
+}
+
+.test-form .form-group {
+  margin-bottom: 20px;
+}
+
+.test-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.test-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.test-form textarea:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.test-submit-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+}
+
+.test-submit-button:hover:not(:disabled) {
+  background-color: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.test-submit-button:disabled {
+  background-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.test-submit-button svg {
+  font-size: 18px;
+}
+
+.test-submit-button .spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Test Result */
+.test-result {
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.test-result h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.test-result.success {
+  background-color: #d1fae5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.test-result.error {
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.test-response {
+  margin-bottom: 12px;
+}
+
+.test-response strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.test-response p {
+  margin: 0;
+  padding: 12px;
+  background-color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.test-time {
+  font-size: 13px;
+  padding: 8px;
+  background-color: white;
+  border-radius: 6px;
+}
+
+.test-time strong {
+  font-weight: 600;
+}
+
+.error-message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* No models message */
+.no-models {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+}
+
+.no-models svg {
+  font-size: 48px;
+  color: #cbd5e1;
+  margin-bottom: 16px;
+}
+
+.no-models p {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* Spinning animation for loading */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.models-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 16px;
+}
+
+.models-loading svg {
+  font-size: 32px;
+  color: #3b82f6;
+}
+
+.models-loading p {
+  margin: 0;
+  font-size: 16px;
+  color: #64748b;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .models-header {
     flex-direction: column;
     align-items: stretch;
   }
-  
-  .upload-model-button {
+
+  .upload-model-button,
+  .reset-model-button {
     margin-left: 0;
     margin-top: 12px;
     justify-content: center;
   }
-  
+
   .active-model-card {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .active-model-actions {
     margin-top: 16px;
   }
-  
+
   .params-grid {
     grid-template-columns: 1fr;
+  }
+
+  .test-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .model-actions {
+    flex-direction: column;
+  }
+
+  .model-actions button {
+    width: 100%;
   }
 }

@@ -47,10 +47,12 @@ export const API_ENDPOINTS = {
 
   ADMIN_GET_CONVERSATIONS: "/api/admin/conversations",
 
-  ADMIN_GET_MODELS: "/api/admin/models",
-  ADMIN_ACTIVATE_MODEL: "/api/admin/models/activate",
-  ADMIN_UPDATE_MODEL_PARAMS: "/api/admin/models/params",
-  ADMIN_UPLOAD_MODEL: "/api/admin/models/upload",
+  // Admin Models endpoints
+  ADMIN_GET_MODELS: "/api/admin/models/available",
+  ADMIN_GET_CURRENT_MODEL: "/api/admin/models/current",
+  ADMIN_SELECT_MODEL: "/api/admin/models/select",
+  ADMIN_TEST_MODEL: "/api/admin/models/test",
+  ADMIN_RESET_MODEL: "/api/admin/models/reset",
 
   // Admin RAG Management endpoints
   ADMIN_LIST_TRAINING_FILES: "/api/admin/rag/list-training-files",
