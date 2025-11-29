@@ -956,6 +956,132 @@
   color: #64748b;
 }
 
+/* RAG Mode Section */
+.rag-mode-section {
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+}
+
+.rag-mode-section h3 {
+  display: flex;
+  align-items: center;
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.rag-mode-card {
+  padding: 16px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+}
+
+.rag-mode-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.rag-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background-color: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rag-option:hover:not(.disabled) {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.rag-option.active {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.rag-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f1f5f9;
+}
+
+.rag-option input[type="radio"] {
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.rag-option.disabled input[type="radio"] {
+  cursor: not-allowed;
+}
+
+.rag-option-content {
+  flex: 1;
+}
+
+.rag-option-content h4 {
+  display: flex;
+  align-items: center;
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.rag-option-content p {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.rag-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.rag-stats span {
+  padding: 4px 8px;
+  background-color: #f1f5f9;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.rag-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #fef3c7;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.rag-warning svg {
+  color: #f59e0b;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.rag-warning span {
+  font-size: 12px;
+  color: #92400e;
+  line-height: 1.4;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .models-header {
@@ -994,5 +1120,9 @@
 
   .model-actions button {
     width: 100%;
+  }
+
+  .rag-mode-options {
+    grid-template-columns: 1fr;
   }
 }

@@ -67,6 +67,11 @@ export const API_ENDPOINTS = {
   ADMIN_EDIT_FILE: "/api/admin/rag/edit-file",
   ADMIN_DOWNLOAD_FILE: "/api/admin/rag/download-file",
 
+  // Admin RAG Mode Management endpoints
+  ADMIN_GET_RAG_MODE: "/api/admin/rag/rag-mode",
+  ADMIN_SET_RAG_MODE: "/api/admin/rag/rag-mode",
+  ADMIN_GET_RAG_STATS: "/api/admin/rag/rag-stats",
+
   // Settings endpoints
   SETTINGS: "/api/settings",
 
