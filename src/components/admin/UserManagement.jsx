@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   FiSearch, FiEdit2, FiTrash2, FiUserPlus, 
   FiAlertTriangle, FiCheck, FiX, FiUser, FiLock, 
-  FiMail, FiShield, FiSliders
+  FiShield
 } from 'react-icons/fi';
 import './UserManagement.css';
 import userService from '../../services/userService';
@@ -16,12 +16,14 @@ const UserManagement = () => {
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   
   // Form state for adding/editing users
   const [formData, setFormData] = useState({
     username: '',
-    studentCode: '',
     name: '',
+    email: '',
+    studentCode: '',
     studentClass: '',
     role: 'user',
     maxTokens: 50000,
@@ -94,7 +96,6 @@ const UserManagement = () => {
     
     if (!formData.username) errors.username = 'Tên đăng nhập là bắt buộc';
     if (!formData.name) errors.name = 'Tên người dùng là bắt buộc';
-    if (!formData.studentCode) errors.studentCode = 'Mã sinh viên là bắt buộc';
     
     // If adding new user or changing password
     if (!selectedUser || formData.password) {
@@ -114,8 +115,9 @@ const UserManagement = () => {
   const handleAddUser = () => {
     setFormData({
       username: '',
-      studentCode: '',
       name: '',
+      email: '',
+      studentCode: '',
       studentClass: '',
       role: 'user',
       maxTokens: 50000,
@@ -132,8 +134,9 @@ const UserManagement = () => {
   const handleEditUser = (user) => {
     setFormData({
       username: user.username,
-      studentCode: user.studentCode || '',
       name: user.name || '',
+      email: user.email || '',
+      studentCode: user.studentCode || '',
       studentClass: user.studentClass || '',
       role: user.role || 'user',
       maxTokens: user.maxTokens || 50000,
@@ -159,8 +162,9 @@ const UserManagement = () => {
         // Cập nhật người dùng hiện có
         const userData = {
           username: formData.username,
-          studentCode: formData.studentCode,
           name: formData.name,
+          email: formData.email,
+          studentCode: formData.studentCode,
           studentClass: formData.studentClass,
           role: formData.role,
           maxTokens: parseInt(formData.maxTokens),
@@ -183,6 +187,8 @@ const UserManagement = () => {
           );
           setUsers(updatedUsers);
           setIsUserModalOpen(false);
+          setSuccessMessage('Cập nhật người dùng thành công!');
+          setTimeout(() => setSuccessMessage(null), 3000);
         } else {
           // Hiển thị lỗi
           setFormErrors({ general: response.error || 'Lỗi khi cập nhật người dùng' });
@@ -192,13 +198,14 @@ const UserManagement = () => {
         const userData = {
           username: formData.username,
           password: formData.password,
-          student_code: formData.studentCode,
           student_name: formData.name,
-          student_class: formData.studentClass,
-          role: formData.role,
-          max_tokens: parseInt(formData.maxTokens),
-          is_active: formData.isActive
+          role: formData.role
         };
+        
+        // Thêm các trường optional nếu có giá trị
+        if (formData.email) userData.email = formData.email;
+        if (formData.studentCode) userData.student_code = formData.studentCode;
+        if (formData.studentClass) userData.student_class = formData.studentClass;
         
         const response = await userService.createUser(userData);
         
@@ -220,6 +227,8 @@ const UserManagement = () => {
           
           setUsers([...users, newUser]);
           setIsUserModalOpen(false);
+          setSuccessMessage('Tạo người dùng mới thành công!');
+          setTimeout(() => setSuccessMessage(null), 3000);
         } else {
           // Hiển thị lỗi
           setFormErrors({ general: response.error || 'Lỗi khi tạo người dùng' });
@@ -255,13 +264,15 @@ const UserManagement = () => {
         setUsers(updatedUsers);
         setIsConfirmDeleteOpen(false);
         setUserToDelete(null);
+        setSuccessMessage('Xóa người dùng thành công!');
+        setTimeout(() => setSuccessMessage(null), 3000);
       } else {
         // Hiển thị lỗi
-        setError('Không thể xóa người dùng: ' + (response.error || 'Lỗi không xác định'));
+        setError(response.error || 'Không thể xóa người dùng');
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      setError('Không thể xóa người dùng: ' + (error.message || 'Lỗi không xác định'));
+      setError(error.message || 'Không thể xóa người dùng');
     } finally {
       setLoading(false);
       setIsConfirmDeleteOpen(false);
@@ -285,6 +296,16 @@ const UserManagement = () => {
           <FiAlertTriangle />
           <span>{error}</span>
           <button onClick={() => setError(null)}>
+            <FiX />
+          </button>
+        </div>
+      )}
+      
+      {successMessage && (
+        <div className="success-message">
+          <FiCheck />
+          <span>{successMessage}</span>
+          <button onClick={() => setSuccessMessage(null)}>
             <FiX />
           </button>
         </div>
@@ -422,7 +443,22 @@ const UserManagement = () => {
                   
                   <div className="form-group">
                     <label>
-                      <FiMail />
+                      <FiUser />
+                      <span>Email</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="Nhập email (không bắt buộc)"
+                    />
+                    {formErrors.email && <div className="form-error">{formErrors.email}</div>}
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>
+                      <FiUser />
                       <span>Mã sinh viên</span>
                     </label>
                     <input
@@ -430,7 +466,7 @@ const UserManagement = () => {
                       name="studentCode"
                       value={formData.studentCode}
                       onChange={handleInputChange}
-                      placeholder="Nhập mã sinh viên"
+                      placeholder="Nhập mã sinh viên (không bắt buộc)"
                     />
                     {formErrors.studentCode && <div className="form-error">{formErrors.studentCode}</div>}
                   </div>
@@ -445,8 +481,9 @@ const UserManagement = () => {
                       name="studentClass"
                       value={formData.studentClass}
                       onChange={handleInputChange}
-                      placeholder="Nhập lớp"
+                      placeholder="Nhập lớp (không bắt buộc)"
                     />
+                    {formErrors.studentClass && <div className="form-error">{formErrors.studentClass}</div>}
                   </div>
                 </div>
                 
@@ -495,33 +532,6 @@ const UserManagement = () => {
                       <option value="admin">Quản trị viên</option>
                     </select>
                   </div>
-                  
-                  <div className="form-group">
-                    <label>
-                      <FiSliders />
-                      <span>Token tối đa</span>
-                    </label>
-                    <input
-                      type="number"
-                      name="maxTokens"
-                      value={formData.maxTokens}
-                      onChange={handleInputChange}
-                      min="1000"
-                      step="1000"
-                    />
-                  </div>
-                  
-                  <div className="form-group checkbox-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="isActive"
-                        checked={formData.isActive}
-                        onChange={handleInputChange}
-                      />
-                      <span>Tài khoản hoạt động</span>
-                    </label>
-                  </div>
                 </div>
               </div>
               
@@ -569,16 +579,18 @@ const UserManagement = () => {
               <button 
                 className="cancel-button"
                 onClick={() => setIsConfirmDeleteOpen(false)}
+                disabled={loading}
               >
                 <FiX />
                 <span>Hủy bỏ</span>
               </button>
               <button 
-                className="delete-button"
+                className="confirm-delete-button"
                 onClick={handleDeleteUser}
+                disabled={loading}
               >
-                <FiCheck />
-                <span>Xác nhận xóa</span>
+                <FiTrash2 />
+                <span>{loading ? 'Đang xóa...' : 'Xác nhận xóa'}</span>
               </button>
             </div>
           </div>
