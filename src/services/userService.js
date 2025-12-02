@@ -32,9 +32,29 @@ class UserService {
     } catch (error) {
       console.error('Lỗi khi lấy danh sách người dùng:', error);
       console.error('Error response:', error.response);
+      
+      let errorMessage = 'Lỗi khi lấy danh sách người dùng';
+      
+      if (error.response) {
+        const status = error.response.status;
+        const detail = error.response.data?.detail || error.response.data?.message;
+        
+        if (status === 403) {
+          errorMessage = 'Bạn không có quyền truy cập. Vui lòng đăng nhập với tài khoản admin.';
+        } else if (status === 401) {
+          errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        } else if (status === 500) {
+          errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau.';
+        } else if (detail) {
+          errorMessage = detail;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       return {
         success: false,
-        error: error.message || 'Lỗi khi lấy danh sách người dùng'
+        error: errorMessage
       };
     }
   }
@@ -55,9 +75,29 @@ class UserService {
       };
     } catch (error) {
       console.error('Lỗi khi cập nhật thông tin người dùng:', error);
+      
+      let errorMessage = 'Lỗi khi cập nhật thông tin người dùng';
+      
+      if (error.response) {
+        const status = error.response.status;
+        const detail = error.response.data?.detail || error.response.data?.message;
+        
+        if (status === 404) {
+          errorMessage = 'Không tìm thấy người dùng.';
+        } else if (status === 403) {
+          errorMessage = 'Bạn không có quyền cập nhật người dùng này.';
+        } else if (status === 400) {
+          errorMessage = detail || 'Dữ liệu không hợp lệ.';
+        } else if (detail) {
+          errorMessage = detail;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       return {
         success: false,
-        error: error.message || 'Lỗi khi cập nhật thông tin người dùng'
+        error: errorMessage
       };
     }
   }
@@ -77,9 +117,27 @@ class UserService {
       };
     } catch (error) {
       console.error('Lỗi khi xóa người dùng:', error);
+      
+      let errorMessage = 'Lỗi khi xóa người dùng';
+      
+      if (error.response) {
+        const status = error.response.status;
+        const detail = error.response.data?.detail || error.response.data?.message;
+        
+        if (status === 404) {
+          errorMessage = 'Không tìm thấy người dùng.';
+        } else if (status === 403) {
+          errorMessage = 'Bạn không có quyền xóa người dùng này.';
+        } else if (detail) {
+          errorMessage = detail;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       return {
         success: false,
-        error: error.message || 'Lỗi khi xóa người dùng'
+        error: errorMessage
       };
     }
   }
@@ -99,9 +157,38 @@ class UserService {
       };
     } catch (error) {
       console.error('Lỗi khi tạo người dùng:', error);
+      
+      let errorMessage = 'Lỗi khi tạo người dùng';
+      
+      if (error.response) {
+        const status = error.response.status;
+        const detail = error.response.data?.detail || error.response.data?.message;
+        
+        if (status === 400) {
+          // Xử lý các lỗi validation cụ thể
+          if (detail?.includes('Tên đăng nhập')) {
+            errorMessage = 'Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.';
+          } else if (detail?.includes('Email')) {
+            errorMessage = 'Email đã được sử dụng. Vui lòng sử dụng email khác.';
+          } else if (detail?.includes('Mã sinh viên')) {
+            errorMessage = 'Mã sinh viên đã tồn tại. Vui lòng kiểm tra lại.';
+          } else {
+            errorMessage = detail || 'Dữ liệu không hợp lệ.';
+          }
+        } else if (status === 403) {
+          errorMessage = 'Bạn không có quyền tạo người dùng.';
+        } else if (status === 500) {
+          errorMessage = 'Lỗi máy chủ. Vui lòng thử lại sau.';
+        } else if (detail) {
+          errorMessage = detail;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       return {
         success: false,
-        error: error.message || 'Lỗi khi tạo người dùng'
+        error: errorMessage
       };
     }
   }
