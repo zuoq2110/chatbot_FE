@@ -26,6 +26,8 @@ function ChatApp() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [viewMode, setViewMode] = useState('chat'); // 'chat' or 'file-chat'
   const [showStatsPanel, setShowStatsPanel] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState('default'); // Default to 'default' (all)
+  const [folders, setFolders] = useState([]);
   const messagesEndRef = useRef(null);
 
   // Scroll to bottom when new messages arrive
@@ -123,6 +125,40 @@ function ChatApp() {
           } else {
             console.error('Failed to load conversations:', convResponse.error);
             setError('Lỗi khi tải danh sách hội thoại: ' + convResponse.error);
+          }
+          
+          // Load folders list from API
+          console.log('Loading folders from API...');
+          const foldersResponse = await chatService.getFolders();
+          console.log('Folders API response:', foldersResponse);
+          
+          if (foldersResponse.success && foldersResponse.folders.length > 0) {
+            // Map folders to include display names (optional, will show folder name if no mapping)
+            const folderMappings = {
+              'default': 'Mặc định',
+              'phongdaotao': 'Phòng Đào tạo',
+              'phongdaotao/daihoc': 'Phòng Đào tạo - Đại học',
+              'phongdaotao/giangvien': 'Phòng Đào tạo - Giảng viên',
+              'phongdaotao/thacsi': 'Phòng Đào tạo - Thạc sĩ',
+              'phongdaotao/tiensi': 'Phòng Đào tạo - Tiến sĩ',
+              'phongkhaothi': 'Phòng Khảo thí',
+              'khoa': 'Các Khoa',
+              'viennghiencuuvahoptacphattrien': 'Viện Nghiên cứu',
+              'thongtinHVKTMM': 'Thông tin Học viện',
+              'test': 'Test'
+            };
+            
+            const mappedFolders = foldersResponse.folders.map(folder => ({
+              name: folder,
+              displayName: folderMappings[folder] || folder // Use folder name if no mapping found
+            }));
+            
+            console.log('Mapped folders:', mappedFolders);
+            setFolders(mappedFolders);
+          } else {
+            console.error('Failed to load folders from API:', foldersResponse.error);
+            // Don't set any folders - dropdown will only show "Tất cả"
+            setFolders([]);
           }
         } catch (error) {
           console.error('Error initializing conversations:', error.message);
@@ -250,7 +286,11 @@ function ChatApp() {
 
       // Gửi tin nhắn với conversationId đã xác định
       console.log('Sending message with conversationId:', currentConversationId);
-      const response = await chatService.sendMessage(currentConversationId, messageText);
+      const response = await chatService.sendMessage(
+        currentConversationId, 
+        messageText,
+        selectedFolder === 'chung' ? null : selectedFolder // Send null for 'chung' (all), otherwise send the selected folder
+      );
       if (response.success) {
         const botMessage = {
           id: uuidv4(),
@@ -490,6 +530,9 @@ function ChatApp() {
           <ChatInput
             onSendMessage={handleSendMessage}
             disabled={isLoading || !user} // Chỉ disabled khi loading hoặc chưa đăng nhập
+            selectedFolder={selectedFolder}
+            onFolderChange={setSelectedFolder}
+            folders={folders}
           />
         </div>
         {/* Overlay for mobile sidebar */}

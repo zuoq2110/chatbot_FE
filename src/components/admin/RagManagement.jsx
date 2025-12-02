@@ -523,7 +523,7 @@ const RagManagement = () => {
       
       if (response && response.success) {
         const chunksCount = response.chunks || 0;
-        setMessage(`Chỉ mục RAG đã được xây dựng lại thành công với ${chunksCount} đoạn văn bản`);
+        setMessage(`Chỉ mục RAG đã được xây dựng lại thành công!`);
         setMessageType('success');
       } else {
         setMessage(`Lỗi: ${response?.message || 'Không thể xây dựng lại chỉ mục'}`);

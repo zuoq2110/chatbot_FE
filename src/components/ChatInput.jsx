@@ -7,7 +7,10 @@ const ChatInput = ({
   onVoiceInput, 
   onFileUpload,
   disabled, 
-  placeholder = "Nhập tin nhắn của bạn..." 
+  placeholder = "Nhập tin nhắn của bạn...",
+  selectedFolder,
+  onFolderChange,
+  folders = []
 }) => {
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -105,6 +108,25 @@ const ChatInput = ({
   return (
     <div className="p-4">
       <form onSubmit={handleSubmit} className="flex items-end space-x-3">
+        {/* Folder/Scope selector - Always show */}
+        <div className="flex-shrink-0">
+          <select
+            value={selectedFolder || 'default'}
+            onChange={(e) => onFolderChange && onFolderChange(e.target.value)}
+            disabled={disabled}
+            className="px-3 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+            style={{ minHeight: '48px' }}
+            title="Chọn phạm vi tìm kiếm"
+          >
+            <option value="default">Tất cả</option>
+            {folders && folders.length > 0 && folders.map((folder) => (
+              <option key={folder.name} value={folder.name}>
+                {folder.displayName || folder.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        
         <div className="flex-1 relative">
           <textarea
             value={message}

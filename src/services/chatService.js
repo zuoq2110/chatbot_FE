@@ -123,6 +123,26 @@ const chatService = {
       };
     }
   },
+
+  // Get list of folders (departments)
+  getFolders: async () => {
+    try {
+      const response = await httpClient.get(API_ENDPOINTS.LIST_FOLDERS);
+      
+      return {
+        success: true,
+        folders: response.folders || [],
+        count: response.count || 0
+      };
+    } catch (error) {
+      console.error('Error getting folders:', error);
+      return {
+        success: false,
+        folders: [],
+        error: error.message || 'Failed to get folders'
+      };
+    }
+  },
   
   // Quick chat without saving conversation
   sendQuickMessage: async (message) => {
@@ -261,9 +281,9 @@ const chatService = {
   },
 
   // Send message to a conversation and get AI response
-  sendMessage: async (conversationId, message) => {
+  sendMessage: async (conversationId, message, department = null) => {
     try {
-      console.log(conversationId, message);
+      console.log(conversationId, message, department);
       // Get current user info for context
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
       
@@ -276,12 +296,19 @@ const chatService = {
         headers['student_code'] = userInfo.student_code;
       }
       
+      const requestBody = {
+        content: message,
+        is_user: true,
+      };
+      
+      // Add department if provided
+      if (department) {
+        requestBody.department = department;
+      }
+      
       const response = await httpClient.post(
         `/api/chat/${conversationId}/messages`,
-        {
-          content: message,
-          is_user: true,
-        },
+        requestBody,
         { headers }
       );
 

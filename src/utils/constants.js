@@ -23,6 +23,7 @@ export const API_ENDPOINTS = {
   FILE_INFO: '/api/chat/file-info', // endpoint để lấy thông tin file
   LIST_FILES: '/api/chat/list-files', // endpoint để liệt kê tất cả files
   DELETE_FILE: '/api/chat/delete-file', // endpoint để xóa file
+  LIST_FOLDERS: '/api/chat/list-folders', // endpoint để lấy danh sách folders
   
   // Admin endpoints
   ADMIN_GET_USERS: '/api/users/admin/all',
