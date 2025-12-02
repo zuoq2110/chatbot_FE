@@ -145,7 +145,7 @@ const chatService = {
   },
   
   // Quick chat without saving conversation
-  sendQuickMessage: async (message) => {
+  sendQuickMessage: async (message, department = null) => {
     try {
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
       const headers = {
@@ -157,6 +157,7 @@ const chatService = {
 
       const response = await httpClient.post(API_ENDPOINTS.QUICK_CHAT, {
         content: message,
+        department: department
       }, { headers });
 
       if (response.statusCode === 200 && response.data) {
