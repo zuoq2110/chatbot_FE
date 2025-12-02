@@ -243,7 +243,7 @@ function ChatApp() {
     setIsSidebarOpen(false);
   };
 
-  const handleSendMessage = async (messageText) => {
+  const handleSendMessage = async (messageText, department = null) => {
     if (!messageText.trim()) {
       console.error('Cannot send message: Missing message text');
       setError('Không thể gửi tin nhắn: Nội dung trống.');
@@ -255,6 +255,7 @@ function ChatApp() {
       content: messageText,
       sender: 'user',
       timestamp: new Date().toISOString(),
+      department: department
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -302,11 +303,37 @@ function ChatApp() {
         setError(null);
       } else {
         // Kiểm tra nếu là lỗi rate limit (status code 429)
-        if (response.statusCode === 429 || response.error?.includes('giới hạn') || response.error?.includes('limit')) {
+        console.log('Response error:', response);
+        
+        // Safely convert error to string
+        let errorMsg = '';
+        if (typeof response.error === 'string') {
+          errorMsg = response.error;
+        } else if (response.error && typeof response.error === 'object') {
+          // Check if it's a validation error array
+          if (Array.isArray(response.error)) {
+            errorMsg = response.error.map(err => {
+              if (typeof err === 'string') return err;
+              if (err.msg) return err.msg;
+              return JSON.stringify(err);
+            }).join(', ');
+          } else {
+            errorMsg = JSON.stringify(response.error);
+          }
+        }
+        
+        let responseMsg = '';
+        if (typeof response.message === 'string') {
+          responseMsg = response.message;
+        } else if (response.message && typeof response.message === 'object') {
+          responseMsg = JSON.stringify(response.message);
+        }
+        
+        if (response.statusCode === 429 || errorMsg?.includes('giới hạn') || errorMsg?.includes('limit')) {
           // Hiển thị thông báo giới hạn tốc độ chính xác từ API
           const rateLimitMessage = {
             id: uuidv4(),
-            content: `⚠️ ${response.message || response.error || 'Bạn đã vượt quá giới hạn gửi tin nhắn. Vui lòng thử lại sau.'}`,
+            content: `⚠️ ${responseMsg || errorMsg || 'Bạn đã vượt quá giới hạn gửi tin nhắn. Vui lòng thử lại sau.'}`,
             sender: 'bot',
             timestamp: new Date().toISOString(),
             isError: true,
@@ -317,14 +344,14 @@ function ChatApp() {
           // Không hiển thị bảng thống kê sử dụng
           // window.dispatchEvent(new Event('showRateLimitStats'));
           
-          setError(response.message || response.error);
+          setError(responseMsg || errorMsg);
         } else {
-          throw new Error(response.error || 'Failed to send message');
+          throw new Error(errorMsg || responseMsg || 'Failed to send message');
         }
       }
     } catch (error) {
       console.error('Error sending message:', error.message);
-      let errorText = 'Xin lỗi, có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại sau.';
+      let errorText = '';
       let isRateLimit = false;
       
       // Kiểm tra lỗi rate limit
@@ -333,6 +360,19 @@ function ChatApp() {
         isRateLimit = true;
         // Không hiển thị bảng thống kê sử dụng
         // window.dispatchEvent(new Event('showRateLimitStats'));
+      } else if (error.response && error.response.status === 403) {
+        // Lỗi phân quyền hoặc giới hạn phạm vi truy vấn
+        const detailData = error.response.data?.detail || error.response.data?.message;
+        errorText = typeof detailData === 'string' ? detailData : 
+                   JSON.stringify(detailData) || 'Câu hỏi này vượt ngoài phạm vi được phép. Vui lòng chọn phạm vi phù hợp hoặc hỏi câu hỏi khác.';
+      } else if (error.response && error.response.status === 401) {
+        errorText = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+      } else if (error.response && error.response.status === 400) {
+        const detailData = error.response.data?.detail || error.response.data?.message;
+        errorText = typeof detailData === 'string' ? detailData : 
+                   JSON.stringify(detailData) || 'Dữ liệu gửi không hợp lệ. Vui lòng kiểm tra lại.';
+      } else if (error.response && error.response.status === 500) {
+        errorText = 'Lỗi máy chủ nội bộ. Vui lòng thử lại sau hoặc liên hệ với quản trị viên.';
       } else if (error.message.includes('Invalid ID format')) {
         errorText = 'Lỗi: ID hội thoại không hợp lệ. Vui lòng thử lại.';
       } else if (error.message.includes('Unprocessable')) {
@@ -342,6 +382,17 @@ function ChatApp() {
         isRateLimit = true;
         // Không hiển thị bảng thống kê sử dụng
         // window.dispatchEvent(new Event('showRateLimitStats'));
+      } else if (error.message.includes('Network Error')) {
+        errorText = 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet và thử lại.';
+      } else if (error.message.includes('timeout')) {
+        errorText = 'Yêu cầu bị hết thời gian chờ. Vui lòng thử lại sau.';
+      } else {
+        // Sử dụng thông báo lỗi chi tiết từ error.message hoặc response
+        const detailData = error.response?.data?.detail || error.response?.data?.message;
+        errorText = typeof detailData === 'string' ? detailData :
+                   (detailData ? JSON.stringify(detailData) : '') ||
+                   error.message || 
+                   'Có lỗi không xác định xảy ra. Vui lòng thử lại sau.';
       }
       
       const errorMessage = {

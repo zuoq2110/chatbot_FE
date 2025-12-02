@@ -1,11 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { FiSend, FiMic, FiMicOff, FiPaperclip } from 'react-icons/fi';
+import { FiSend, FiMic, FiMicOff } from 'react-icons/fi';
 import './ChatInput.css';
 
 const ChatInput = ({ 
   onSendMessage, 
-  onVoiceInput, 
-  onFileUpload,
+  onVoiceInput,
   disabled, 
   placeholder = "Nhập tin nhắn của bạn...",
   selectedFolder,
@@ -14,14 +13,13 @@ const ChatInput = ({
 }) => {
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
   const recognitionRef = useRef(null);
-  const fileInputRef = useRef(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (message.trim() && !disabled) {
-      onSendMessage(message);
+      // Send message with selected folder
+      onSendMessage(message, selectedFolder);
       setMessage('');
     }
   };
@@ -85,24 +83,6 @@ const ChatInput = ({
     } else {
       startVoiceRecognition();
     }
-  };
-  
-  // Handle file upload
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-      // Create a preview or notification that file is selected
-      setMessage(`File đã chọn: ${file.name}`);
-      
-      if (onFileUpload) {
-        onFileUpload(file);
-      }
-    }
-  };
-  
-  const triggerFileInput = () => {
-    fileInputRef.current.click();
   };
 
   return (
