@@ -4,6 +4,52 @@ import httpClient from '../utils/httpClient';
 const { API_ENDPOINTS } = constants;
 
 const chatService = {
+  // Department-specific query
+  queryDepartment: async (query, department) => {
+    try {
+      // Get current user info for context
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add student_code to header if available
+      if (userInfo.student_code) {
+        headers['student_code'] = userInfo.student_code;
+      }
+      
+      const response = await httpClient.post(
+        `${API_ENDPOINTS.DEPARTMENT_QUERY}?department=${encodeURIComponent(department)}`,
+        {
+          content: query
+        },
+        { headers }
+      );
+      
+      if (response.statusCode === 200 && response.data) {
+        return {
+          success: true,
+          message: {
+            id: `dept_${Date.now()}`, // Generate unique ID for department response
+            content: response.data.content,
+            isUser: false, // This is a bot response
+            createdAt: response.data.created_at,
+          },
+          department: department
+        };
+      } else {
+        throw new Error(response.message || 'Failed to query department');
+      }
+    } catch (error) {
+      console.error('Error in department query:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to query department'
+      };
+    }
+  },
+
   // Upload file for chat
   uploadFile: async (formData) => {
     try {
@@ -120,6 +166,26 @@ const chatService = {
       return {
         success: false,
         error: error.message || 'Failed to delete file'
+      };
+    }
+  },
+
+  // Get list of folders (departments)
+  getFolders: async () => {
+    try {
+      const response = await httpClient.get(API_ENDPOINTS.LIST_FOLDERS);
+      
+      return {
+        success: true,
+        folders: response.folders || [],
+        count: response.count || 0
+      };
+    } catch (error) {
+      console.error('Error getting folders:', error);
+      return {
+        success: false,
+        folders: [],
+        error: error.message || 'Failed to get folders'
       };
     }
   },
@@ -265,6 +331,14 @@ const chatService = {
   sendMessage: async (conversationId, message, department = null) => {
     try {
       console.log(conversationId, message, department);
+      
+      // If specific department is selected, use department-specific query
+      if (department && department !== 'default') {
+        console.log('Using department-specific query for:', department);
+        return await chatService.queryDepartment(message, department);
+      }
+      
+      // Otherwise use regular conversation messaging
       // Get current user info for context
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
       
@@ -277,13 +351,19 @@ const chatService = {
         headers['student_code'] = userInfo.student_code;
       }
       
+      const requestBody = {
+        content: message,
+        is_user: true,
+      };
+      
+      // Add department if provided
+      if (department) {
+        requestBody.department = department;
+      }
+      
       const response = await httpClient.post(
         `/api/chat/${conversationId}/messages`,
-        {
-          content: message,
-          is_user: true,
-          department: department
-        },
+        requestBody,
         { headers }
       );
 

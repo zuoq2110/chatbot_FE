@@ -1,36 +1,26 @@
 import React, { useState, useRef } from 'react';
-import { FiSend, FiMic, FiMicOff, FiPaperclip } from 'react-icons/fi';
+import { FiSend, FiMic, FiMicOff } from 'react-icons/fi';
 import './ChatInput.css';
 
 const ChatInput = ({ 
   onSendMessage, 
-  onVoiceInput, 
-  onFileUpload,
+  onVoiceInput,
   disabled, 
   placeholder = "Nhập tin nhắn của bạn...",
-  department = null,
-  onDepartmentChange = null
+  selectedFolder,
+  onFolderChange,
+  folders = []
 }) => {
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [selectedDepartment, setSelectedDepartment] = useState(department || 'chung');
   const recognitionRef = useRef(null);
-  const fileInputRef = useRef(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (message.trim() && !disabled) {
-      // Send message with department info
-      onSendMessage(message, selectedDepartment);
+      // Send message with selected folder
+      onSendMessage(message, selectedFolder);
       setMessage('');
-    }
-  };
-
-  const handleDepartmentChange = (dept) => {
-    setSelectedDepartment(dept);
-    if (onDepartmentChange) {
-      onDepartmentChange(dept);
     }
   };
 
@@ -94,103 +84,29 @@ const ChatInput = ({
       startVoiceRecognition();
     }
   };
-  
-  // Handle file upload
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-      // Create a preview or notification that file is selected
-      setMessage(`File đã chọn: ${file.name}`);
-      
-      if (onFileUpload) {
-        onFileUpload(file);
-      }
-    }
-  };
-  
-  const triggerFileInput = () => {
-    fileInputRef.current.click();
-  };
 
   return (
     <div className="p-4">
-      {/* Department selector */}
-      <div className="mb-3">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Phạm vi truy vấn:
-        </label>
-        <div className="flex gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => handleDepartmentChange('chung')}
-            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-              selectedDepartment === 'chung'
-                ? 'bg-blue-500 text-white border-blue-500'
-                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-            }`}
-          >
-            Tất cả
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDepartmentChange('phongdaotao')}
-            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-              selectedDepartment === 'phongdaotao'
-                ? 'bg-green-500 text-white border-green-500'
-                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-            }`}
-          >
-            Đào tạo
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDepartmentChange('phongkhaothi')}
-            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-              selectedDepartment === 'phongkhaothi'
-                ? 'bg-orange-500 text-white border-orange-500'
-                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-            }`}
-          >
-            Khảo thí
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDepartmentChange('khoa')}
-            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-              selectedDepartment === 'khoa'
-                ? 'bg-purple-500 text-white border-purple-500'
-                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-            }`}
-          >
-            Khoa
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDepartmentChange('thongtinHVKTMM')}
-            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-              selectedDepartment === 'thongtinHVKTMM'
-                ? 'bg-red-500 text-white border-red-500'
-                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-            }`}
-          >
-            Thông tin HVKTMM
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDepartmentChange('viennghiencuuvahoptacphattrien')}
-            className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
-              selectedDepartment === 'viennghiencuuvahoptacphattrien'
-                ? 'bg-cyan-500 text-white border-cyan-500'
-                : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-            }`}
-          >
-            Viện NC & HT PT
-          </button>
-        </div>
-      </div>
-
       <form onSubmit={handleSubmit} className="flex items-end space-x-3">
+        {/* Folder/Scope selector - Always show */}
+        <div className="flex-shrink-0">
+          <select
+            value={selectedFolder || ''}
+            onChange={(e) => onFolderChange && onFolderChange(e.target.value)}
+            disabled={disabled}
+            className="px-3 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+            style={{ minHeight: '48px' }}
+            title="Chọn phạm vi tìm kiếm"
+          >
+            <option value="">Tất cả</option>
+            {folders && folders.length > 0 && folders.map((folder) => (
+              <option key={folder.name} value={folder.name}>
+                {folder.displayName || folder.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        
         <div className="flex-1 relative">
           <textarea
             value={message}

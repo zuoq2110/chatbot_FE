@@ -1,5 +1,5 @@
-import httpClient from './httpClient';
-import { API_ENDPOINTS } from '../config/constants';
+import httpClient from "../utils/httpClient";
+import { API_ENDPOINTS } from "../utils/constants";
 
 /**
  * Dịch vụ quản lý các mô hình LLM
@@ -14,7 +14,7 @@ const modelService = {
       const response = await httpClient.get(API_ENDPOINTS.MODELS.GET_ALL);
       return response.data || [];
     } catch (error) {
-      console.error('Error fetching models:', error);
+      console.error("Error fetching models:", error);
       throw error;
     }
   },
@@ -28,7 +28,7 @@ const modelService = {
       const response = await httpClient.get(API_ENDPOINTS.MODELS.GET_ACTIVE);
       return response.data || null;
     } catch (error) {
-      console.error('Error fetching active model:', error);
+      console.error("Error fetching active model:", error);
       throw error;
     }
   },
@@ -40,10 +40,12 @@ const modelService = {
    */
   activateModel: async (modelId) => {
     try {
-      const response = await httpClient.post(API_ENDPOINTS.MODELS.ACTIVATE(modelId));
+      const response = await httpClient.post(
+        API_ENDPOINTS.MODELS.ACTIVATE(modelId)
+      );
       return response;
     } catch (error) {
-      console.error('Error activating model:', error);
+      console.error("Error activating model:", error);
       throw error;
     }
   },
@@ -56,10 +58,13 @@ const modelService = {
    */
   updateModelParams: async (modelId, params) => {
     try {
-      const response = await httpClient.put(API_ENDPOINTS.MODELS.UPDATE_PARAMS(modelId), params);
+      const response = await httpClient.put(
+        API_ENDPOINTS.MODELS.UPDATE_PARAMS(modelId),
+        params
+      );
       return response;
     } catch (error) {
-      console.error('Error updating model parameters:', error);
+      console.error("Error updating model parameters:", error);
       throw error;
     }
   },
@@ -71,13 +76,104 @@ const modelService = {
    */
   uploadModel: async (modelData) => {
     try {
-      const response = await httpClient.post(API_ENDPOINTS.MODELS.UPLOAD, modelData);
+      const response = await httpClient.post(
+        API_ENDPOINTS.MODELS.UPLOAD,
+        modelData
+      );
       return response;
     } catch (error) {
-      console.error('Error uploading model:', error);
+      console.error("Error uploading model:", error);
       throw error;
     }
-  }
+  },
+
+  /**
+   * Lấy danh sách models có sẵn (Admin)
+   * @returns {Promise<Object>} Danh sách models có sẵn
+   */
+  getAvailableModels: async () => {
+    try {
+      const response = await httpClient.get(API_ENDPOINTS.ADMIN_GET_MODELS);
+      return response;
+    } catch (error) {
+      console.error("Error fetching available models:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Lấy model hiện tại (Admin)
+   * @returns {Promise<Object>} Model hiện tại
+   */
+  getCurrentModel: async () => {
+    try {
+      const response = await httpClient.get(
+        API_ENDPOINTS.ADMIN_GET_CURRENT_MODEL
+      );
+      return response;
+    } catch (error) {
+      console.error("Error fetching current model:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Chọn model (Admin)
+   * @param {string} modelType - Loại model (ollama hoặc gemini)
+   * @param {string} modelName - Tên model cần chọn
+   * @returns {Promise<Object>} Kết quả chọn model
+   */
+  selectModel: async (modelType, modelName) => {
+    try {
+      const response = await httpClient.post(API_ENDPOINTS.ADMIN_SELECT_MODEL, {
+        model_type: modelType,
+        model_name: modelName,
+      });
+      return response;
+    } catch (error) {
+      console.error("Error selecting model:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Test model (Admin)
+   * @param {string} modelType - Loại model (ollama hoặc gemini)
+   * @param {string} modelName - Tên model cần test
+   * @param {string} testMessage - Message để test
+   * @returns {Promise<Object>} Kết quả test
+   */
+  testModel: async (
+    modelType,
+    modelName,
+    testMessage = "Hello, how are you?"
+  ) => {
+    try {
+      const response = await httpClient.post(API_ENDPOINTS.ADMIN_TEST_MODEL, {
+        model_type: modelType,
+        model_name: modelName,
+        test_message: testMessage,
+      });
+      return response;
+    } catch (error) {
+      console.error("Error testing model:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Reset model về mặc định (Admin)
+   * @returns {Promise<Object>} Kết quả reset
+   */
+  resetModel: async () => {
+    try {
+      const response = await httpClient.post(API_ENDPOINTS.ADMIN_RESET_MODEL);
+      return response;
+    } catch (error) {
+      console.error("Error resetting model:", error);
+      throw error;
+    }
+  },
 };
 
 export default modelService;

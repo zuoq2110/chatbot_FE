@@ -190,8 +190,20 @@ const UserManagement = () => {
           setSuccessMessage('Cập nhật người dùng thành công!');
           setTimeout(() => setSuccessMessage(null), 3000);
         } else {
-          // Hiển thị lỗi
-          setFormErrors({ general: response.error || 'Lỗi khi cập nhật người dùng' });
+          // Hiển thị lỗi - convert object to string if needed
+          let errorMessage = response.error || 'Lỗi khi cập nhật người dùng';
+          if (typeof errorMessage === 'object') {
+            if (Array.isArray(errorMessage)) {
+              errorMessage = errorMessage.map(err => {
+                if (typeof err === 'string') return err;
+                if (err.msg) return err.msg;
+                return JSON.stringify(err);
+              }).join(', ');
+            } else {
+              errorMessage = JSON.stringify(errorMessage);
+            }
+          }
+          setFormErrors({ general: errorMessage });
         }
       } else {
         // Thêm người dùng mới
@@ -230,8 +242,20 @@ const UserManagement = () => {
           setSuccessMessage('Tạo người dùng mới thành công!');
           setTimeout(() => setSuccessMessage(null), 3000);
         } else {
-          // Hiển thị lỗi
-          setFormErrors({ general: response.error || 'Lỗi khi tạo người dùng' });
+          // Hiển thị lỗi - convert object to string if needed
+          let errorMessage = response.error || 'Lỗi khi tạo người dùng';
+          if (typeof errorMessage === 'object') {
+            if (Array.isArray(errorMessage)) {
+              errorMessage = errorMessage.map(err => {
+                if (typeof err === 'string') return err;
+                if (err.msg) return err.msg;
+                return JSON.stringify(err);
+              }).join(', ');
+            } else {
+              errorMessage = JSON.stringify(errorMessage);
+            }
+          }
+          setFormErrors({ general: errorMessage });
         }
       }
     } catch (error) {
