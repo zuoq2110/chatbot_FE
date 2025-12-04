@@ -33,7 +33,7 @@ function ChatApp() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [viewMode, setViewMode] = useState("chat"); // 'chat' or 'file-chat'
   const [showStatsPanel, setShowStatsPanel] = useState(false);
-  const [selectedFolder, setSelectedFolder] = useState('default'); // Default to 'default' (all)
+  const [selectedFolder, setSelectedFolder] = useState('all'); // Default to 'all'
   const [folders, setFolders] = useState([]);
   const messagesEndRef = useRef(null);
 
@@ -324,7 +324,7 @@ function ChatApp() {
       const response = await chatService.sendMessage(
         currentConversationId, 
         messageText,
-        selectedFolder === 'default' ? null : selectedFolder // Send null for 'default' (all), otherwise send the selected folder
+        selectedFolder === 'all' ? null : selectedFolder // Send null for 'all', otherwise send the selected folder
       );
       if (response.success) {
         const botMessage = {

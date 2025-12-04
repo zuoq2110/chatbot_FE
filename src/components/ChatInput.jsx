@@ -91,14 +91,14 @@ const ChatInput = ({
         {/* Folder/Scope selector - Always show */}
         <div className="flex-shrink-0">
           <select
-            value={selectedFolder || 'default'}
+            value={selectedFolder || ''}
             onChange={(e) => onFolderChange && onFolderChange(e.target.value)}
             disabled={disabled}
             className="px-3 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
             style={{ minHeight: '48px' }}
             title="Chọn phạm vi tìm kiếm"
           >
-            <option value="default">Tất cả</option>
+            <option value="">Tất cả</option>
             {folders && folders.length > 0 && folders.map((folder) => (
               <option key={folder.name} value={folder.name}>
                 {folder.displayName || folder.name}

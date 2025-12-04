@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
   LIST_FILES: '/api/chat/list-files', // endpoint để liệt kê tất cả files
   DELETE_FILE: '/api/chat/delete-file', // endpoint để xóa file
   LIST_FOLDERS: '/api/chat/list-folders', // endpoint để lấy danh sách folders
+  DEPARTMENT_QUERY: '/api/chat/department-query', // endpoint để query specific department
   
   // Admin endpoints
   ADMIN_GET_USERS: "/api/users/admin/all",
@@ -60,6 +61,8 @@ export const API_ENDPOINTS = {
   ADMIN_UPLOAD_TRAINING_FILE: "/api/admin/rag/upload-training-file",
   ADMIN_DELETE_TRAINING_FILE: "/api/admin/rag/delete-training-file",
   ADMIN_REBUILD_RAG_INDEX: "/api/admin/rag/rebuild-rag-index",
+  ADMIN_REBUILD_DEPARTMENT_RAG_INDEX: "/api/admin/rag/rebuild-department-rag-index",
+  ADMIN_LIST_DEPARTMENTS: "/api/admin/rag/list-departments",
   ADMIN_CREATE_FOLDER: "/api/admin/rag/create-folder",
   ADMIN_CREATE_SUBFOLDER: "/api/admin/rag/create-subfolder",
   ADMIN_DELETE_FOLDER: "/api/admin/rag/delete-folder",

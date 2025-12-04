@@ -5,6 +5,7 @@ import {
   FiMessageSquare,
   FiSettings,
   FiAlignLeft,
+  FiFolder,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 

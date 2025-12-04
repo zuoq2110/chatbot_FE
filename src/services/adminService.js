@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from '../utils/constants';
+import { API_ENDPOINTS, API_BASE_URL } from '../utils/constants';
 // Uncomment when integrating with real API
 import httpClient from '../utils/httpClient';
 
@@ -325,8 +325,12 @@ class AdminService {
     }
   }
 
-  async uploadTrainingFile(file, folder = 'default') {
+  async uploadTrainingFile(file, folder) {
     try {
+      if (!folder || folder.trim() === '') {
+        throw new Error('Department folder is required for file upload');
+      }
+
       const formData = new FormData();
       formData.append('file', file);
       // folder được truyền dưới dạng query parameter, không phải trong FormData
@@ -351,8 +355,12 @@ class AdminService {
     }
   }
 
-  async deleteTrainingFile(filename, folder = 'default') {
+  async deleteTrainingFile(filename, folder) {
     try {
+      if (!folder || folder.trim() === '') {
+        throw new Error('Department folder is required for file deletion');
+      }
+
       const url = `${API_ENDPOINTS.ADMIN_DELETE_TRAINING_FILE}/${encodeURIComponent(filename)}?folder=${encodeURIComponent(folder)}`;
       console.log('Deleting file:', url);
       const response = await httpClient.delete(url);
@@ -459,7 +467,7 @@ class AdminService {
   
   async rebuildRagIndex() {
     try {
-      console.log('Rebuilding RAG index at:', API_ENDPOINTS.ADMIN_REBUILD_RAG_INDEX);
+      console.log('Rebuilding full RAG index at:', API_ENDPOINTS.ADMIN_REBUILD_RAG_INDEX);
       const response = await httpClient.post(API_ENDPOINTS.ADMIN_REBUILD_RAG_INDEX);
       console.log('Rebuild response:', response);
       return response || { success: false, message: 'No response data' };
@@ -468,6 +476,36 @@ class AdminService {
       return {
         success: false,
         message: error.message || 'Failed to rebuild RAG index'
+      };
+    }
+  }
+
+  async rebuildDepartmentRagIndex(department) {
+    try {
+      console.log('Rebuilding RAG index for department:', department);
+      const response = await httpClient.post(API_ENDPOINTS.ADMIN_REBUILD_DEPARTMENT_RAG_INDEX, department);
+      console.log('Rebuild department response:', response);
+      return response || { success: false, message: 'No response data' };
+    } catch (error) {
+      console.error('Error rebuilding department RAG index:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to rebuild department RAG index'
+      };
+    }
+  }
+
+  async getDepartments() {
+    try {
+      console.log('Fetching available departments');
+      const response = await httpClient.get(API_ENDPOINTS.ADMIN_LIST_DEPARTMENTS);
+      console.log('Departments response:', response);
+      return response || { success: false, message: 'No response data' };
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to fetch departments'
       };
     }
   }
@@ -493,20 +531,104 @@ class AdminService {
   async downloadFile(filePath) {
     try {
       console.log('Downloading file:', filePath);
+      
+      // Check if token exists - try both 'token' and 'accessToken'
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+      console.log('Token exists:', !!token);
+      console.log('Token preview:', token ? `${token.substring(0, 20)}...` : 'null');
+      
+      // If no token, try direct download without authentication
+      if (!token) {
+        console.warn('No authentication token found. Attempting direct download...');
+        // Try direct download without auth first
+        try {
+          const encodedFilePath = encodeURIComponent(filePath);
+          const url = `${API_BASE_URL}${API_ENDPOINTS.ADMIN_DOWNLOAD_FILE}/${encodedFilePath}`;
+          console.log('Direct download URL:', url);
+          window.open(url, '_blank');
+          return { success: true, message: 'Đã mở file trong tab mới (không có xác thực)' };
+        } catch (directError) {
+          console.error('Direct download failed:', directError);
+          throw new Error('No authentication token found. Please login to download files.');
+        }
+      }
+      
       // Mã hóa đường dẫn file để tránh lỗi với các ký tự đặc biệt
       const encodedFilePath = encodeURIComponent(filePath);
-      const url = `${API_ENDPOINTS.ADMIN_DOWNLOAD_FILE}/${encodedFilePath}`;
+      console.log('Encoded file path:', encodedFilePath);
       
-      // Đối với tải tệp, chúng ta cần sử dụng một cách tiếp cận khác
-      // so với các yêu cầu API thông thường
-      window.open(url, '_blank');
-      return { success: true };
+      const url = `${API_BASE_URL}${API_ENDPOINTS.ADMIN_DOWNLOAD_FILE}/${encodedFilePath}`;
+      console.log('Download URL:', url);
+      
+      // Tạo yêu cầu HTTP với responseType là blob để xử lý file binary
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      
+      if (!response.ok) {
+        // Log response text for debugging
+        const responseText = await response.text();
+        console.error('Response error text:', responseText);
+        throw new Error(`HTTP error! status: ${response.status} - ${responseText}`);
+      }
+      
+      // Lấy blob từ response
+      const blob = await response.blob();
+      console.log('Blob size:', blob.size, 'type:', blob.type);
+      
+      // Lấy tên file từ header hoặc từ đường dẫn
+      let filename = filePath.split('/').pop();
+      const contentDisposition = response.headers.get('Content-Disposition');
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+      
+      console.log('Final filename:', filename);
+      
+      // Tạo URL object cho blob
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // Tạo element anchor để tự động tải xuống
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.style.display = 'none';
+      
+      // Thêm vào DOM, click, và loại bỏ
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Giải phóng blob URL
+      window.URL.revokeObjectURL(blobUrl);
+      
+      return { success: true, message: `Đã tải xuống ${filename}` };
     } catch (error) {
       console.error('Error downloading file:', error);
-      return {
-        success: false,
-        message: error.message || 'Failed to download file'
-      };
+      
+      // Fallback: mở trong tab mới nếu tải xuống trực tiếp thất bại
+      try {
+        const encodedFilePath = encodeURIComponent(filePath);
+        const url = `${API_BASE_URL}${API_ENDPOINTS.ADMIN_DOWNLOAD_FILE}/${encodedFilePath}`;
+        console.log('Fallback: opening URL in new tab:', url);
+        window.open(url, '_blank');
+        return { success: true, message: 'Đã mở file trong tab mới' };
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+        return {
+          success: false,
+          message: error.message || 'Failed to download file'
+        };
+      }
     }
   }
 }

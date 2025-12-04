@@ -15,11 +15,11 @@ const RagManagement = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [rebuilding, setRebuilding] = useState(false);
-  const [folders, setFolders] = useState([{name: 'default', files_count: 0, is_default: true}]);
-  const [selectedFolder, setSelectedFolder] = useState('default');
+  const [folders, setFolders] = useState([]);
+  const [selectedFolder, setSelectedFolder] = useState('');
   const [newFolderName, setNewFolderName] = useState('');
   const [showFolderInput, setShowFolderInput] = useState(false);
-  const [expandedFolders, setExpandedFolders] = useState({default: true});
+  const [expandedFolders, setExpandedFolders] = useState({});
   const [renamingFolder, setRenamingFolder] = useState('');
   const [newFolderNameForRename, setNewFolderNameForRename] = useState('');
   const [showSubfolderInput, setShowSubfolderInput] = useState(false);
@@ -28,12 +28,20 @@ const RagManagement = () => {
   const [editingFile, setEditingFile] = useState(null);
   const [fileContent, setFileContent] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [downloadingFiles, setDownloadingFiles] = useState({}); // Track downloading state for each file
+  
+  // New states for department rebuild
+  const [departments, setDepartments] = useState([]);
+  const [showDepartmentModal, setShowDepartmentModal] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [rebuildingDepartment, setRebuildingDepartment] = useState(false);
 
   useEffect(() => {
     // Chỉ chạy khi component mount
     const initData = async () => {
       await fetchFolders();
       await fetchFiles();
+      await fetchDepartments();
     };
     
     initData();
@@ -52,7 +60,6 @@ const RagManagement = () => {
         
         // Chuyển đổi danh sách tên thành các đối tượng với cấu trúc phù hợp
         const formattedFolders = folderNames.map(folderName => {
-          const isDefault = folderName === 'default';
           // Đếm số lượng files trong folder này
           const filesCount = files.filter(file => file.folder === folderName).length;
           
@@ -73,65 +80,58 @@ const RagManagement = () => {
             displayName: displayName, // Tên hiển thị (chỉ phần child)
             parentFolder: parentFolder, // Tên thư mục cha (vd: parent)
             files_count: filesCount,
-            is_default: isDefault,
             is_subfolder: isSubfolder
           };
         });
         
-        // Đảm bảo luôn có folder default
-        if (!formattedFolders.some(f => f.name === 'default')) {
-          formattedFolders.push({
-            name: 'default', 
-            displayName: 'default',
-            parentFolder: '',
-            files_count: 0, 
-            is_default: true,
-            is_subfolder: false
-          });
-        }
-        
         console.log('Formatted folders:', formattedFolders);
         setFolders(formattedFolders);
         
-        // Nếu không có folder nào được chọn, chọn 'default'
-        if (!selectedFolder || !folderNames.includes(selectedFolder)) {
-          setSelectedFolder('default');
+        // Nếu không có folder nào được chọn và có folders available, chọn folder đầu tiên
+        if (!selectedFolder && formattedFolders.length > 0) {
+          setSelectedFolder(formattedFolders[0].name);
         }
-        
-        // Mở rộng folder mặc định
-        setExpandedFolders(prev => ({
-          ...prev,
-          default: true
-        }));
+        // Nếu không có folder nào, đặt selectedFolder về empty
+        if (formattedFolders.length === 0) {
+          setSelectedFolder('');
+        }
       } else {
         console.error('Error fetching folders:', response?.message);
         setMessage(`Lỗi khi lấy danh sách thư mục: ${response?.message || 'Không rõ lỗi'}`);
         setMessageType('error');
         
-        // Nếu không thể lấy danh sách thư mục, sử dụng default
-        setFolders([{
-          name: 'default', 
-          displayName: 'default',
-          parentFolder: '',
-          files_count: 0, 
-          is_default: true,
-          is_subfolder: false
-        }]);
+        // Nếu không thể lấy danh sách thư mục, để trống
+        setFolders([]);
       }
     } catch (error) {
       console.error('Error in fetchFolders:', error);
       setMessage(`Lỗi khi lấy danh sách thư mục: ${error.message || 'Không rõ lỗi'}`);
       setMessageType('error');
       
-      // Nếu có lỗi, sử dụng default
-      setFolders([{
-        name: 'default', 
-        displayName: 'default',
-        parentFolder: '',
-        files_count: 0, 
-        is_default: true,
-        is_subfolder: false
-      }]);
+      // Nếu có lỗi, để trống
+      setFolders([]);
+    }
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      console.log('Fetching departments...');
+      const response = await adminService.getDepartments();
+      console.log('Departments response:', response);
+      
+      if (response && response.success) {
+        const departmentList = Array.isArray(response.departments) ? response.departments : [];
+        setDepartments(departmentList);
+        console.log('Departments set:', departmentList);
+      } else {
+        console.error('Error fetching departments:', response?.message);
+        setMessage(`Lỗi khi lấy danh sách phòng ban: ${response?.message || 'Không rõ lỗi'}`);
+        setMessageType('error');
+      }
+    } catch (error) {
+      console.error('Error in fetchDepartments:', error);
+      setMessage(`Lỗi khi lấy danh sách phòng ban: ${error.message || 'Không rõ lỗi'}`);
+      setMessageType('error');
     }
   };
 
@@ -150,7 +150,7 @@ const RagManagement = () => {
         // Process files and folders - Ensure proper folder assignment
         fileList.forEach(file => {
           if (!file.folder || file.folder === '') {
-            file.folder = 'default';
+            file.folder = 'uncategorized';
           }
           
           // Ensure the file knows its parent folder structure for subfolders
@@ -251,8 +251,10 @@ const RagManagement = () => {
         // Thêm thư mục mới vào state
         const newFolder = {
           name: newFolderName.trim(),
+          displayName: newFolderName.trim(),
+          parentFolder: '',
           files_count: 0,
-          is_default: false
+          is_subfolder: false
         };
         setFolders(prev => [...prev, newFolder]);
         
@@ -361,8 +363,8 @@ const RagManagement = () => {
   };
 
   const handleDeleteFolder = async (folder) => {
-    if (!folder || folder === 'default') {
-      setMessage('Không thể xóa thư mục mặc định');
+    if (!folder) {
+      setMessage('Tên thư mục không hợp lệ');
       setMessageType('error');
       return;
     }
@@ -384,9 +386,14 @@ const RagManagement = () => {
         await fetchFolders();
         await fetchFiles();
         
-        // Nếu thư mục hiện tại bị xóa, chuyển về thư mục mặc định
+        // Nếu thư mục hiện tại bị xóa, chuyển về thư mục đầu tiên có sẵn
         if (selectedFolder === folder) {
-          setSelectedFolder('default');
+          const remainingFolders = folders.filter(f => f.name !== folder);
+          if (remainingFolders.length > 0) {
+            setSelectedFolder(remainingFolders[0].name);
+          } else {
+            setSelectedFolder('');
+          }
         }
       } else {
         setMessage(`Lỗi: ${response?.message || 'Không thể xóa thư mục'}`);
@@ -402,6 +409,12 @@ const RagManagement = () => {
   const handleUpload = async () => {
     if (!selectedFile) {
       setMessage('Vui lòng chọn file để tải lên');
+      setMessageType('error');
+      return;
+    }
+
+    if (!selectedFolder || selectedFolder.trim() === '') {
+      setMessage('Vui lòng chọn thư mục phòng ban để tải lên file');
       setMessageType('error');
       return;
     }
@@ -435,11 +448,6 @@ const RagManagement = () => {
   };
 
   const showRenameFolder = (folder) => {
-    if (folder === 'default') {
-      setMessage('Không thể đổi tên thư mục mặc định');
-      setMessageType('error');
-      return;
-    }
 
     setRenamingFolder(folder);
     
@@ -508,13 +516,13 @@ const RagManagement = () => {
     setRenamingFolder('');
   };
 
-  const handleRebuildIndex = async () => {
-    if (!window.confirm('Xác nhận xây dựng lại chỉ mục RAG? Quá trình này có thể mất vài phút.')) {
+  const handleFullRebuildIndex = async () => {
+    if (!window.confirm('Xác nhận xây dựng lại toàn bộ chỉ mục RAG? Quá trình này có thể mất vài phút.')) {
       return;
     }
 
     setRebuilding(true);
-    setMessage('Đang xây dựng lại chỉ mục RAG...');
+    setMessage('Đang xây dựng lại toàn bộ chỉ mục RAG...');
     setMessageType('info');
 
     try {
@@ -522,8 +530,7 @@ const RagManagement = () => {
       console.log('Rebuild RAG Index Response:', response); // Debug log
       
       if (response && response.success) {
-        const chunksCount = response.chunks || 0;
-        setMessage(`Chỉ mục RAG đã được xây dựng lại thành công!`);
+        setMessage(`Toàn bộ chỉ mục RAG đã được xây dựng lại thành công!`);
         setMessageType('success');
       } else {
         setMessage(`Lỗi: ${response?.message || 'Không thể xây dựng lại chỉ mục'}`);
@@ -538,6 +545,91 @@ const RagManagement = () => {
     }
   };
 
+  const handleDepartmentRebuildIndex = async () => {
+    if (!selectedDepartment) {
+      setMessage('Vui lòng chọn phòng ban để xây dựng lại chỉ mục');
+      setMessageType('error');
+      return;
+    }
+
+    const selectedDept = departments.find(d => d.name === selectedDepartment);
+    if (!selectedDept) {
+      setMessage('Phòng ban không hợp lệ');
+      setMessageType('error');
+      return;
+    }
+
+    if (!window.confirm(`Xác nhận xây dựng lại chỉ mục RAG cho ${selectedDept.display_name}? Quá trình này có thể mất vài phút.`)) {
+      return;
+    }
+
+    setRebuildingDepartment(true);
+    setMessage(`Đang xây dựng lại chỉ mục RAG cho ${selectedDept.display_name}...`);
+    setMessageType('info');
+    setShowDepartmentModal(false);
+
+    try {
+      const response = await adminService.rebuildDepartmentRagIndex(selectedDepartment);
+      console.log('Rebuild Department RAG Index Response:', response);
+      
+      if (response && response.success) {
+        setMessage(response.message || `Chỉ mục RAG cho ${selectedDept.display_name} đã được xây dựng lại thành công`);
+        setMessageType('success');
+      } else {
+        setMessage(`Lỗi khi xây dựng lại chỉ mục cho ${selectedDept.display_name}: ${response?.message || 'Đã xảy ra lỗi'}`);
+        setMessageType('error');
+      }
+    } catch (error) {
+      console.error('Error rebuilding department RAG index:', error);
+      setMessage(`Lỗi khi xây dựng lại chỉ mục cho ${selectedDept.display_name}: ${error.message || 'Đã xảy ra lỗi'}`);
+      setMessageType('error');
+    } finally {
+      setRebuildingDepartment(false);
+      setSelectedDepartment('');
+    }
+  };
+
+  const closeDepartmentModal = () => {
+    setShowDepartmentModal(false);
+    setSelectedDepartment('');
+  };
+
+  const handleDirectDepartmentRebuild = async (departmentName) => {
+    const selectedDept = departments.find(d => d.name === departmentName);
+    if (!selectedDept) {
+      setMessage('Phòng ban không hợp lệ');
+      setMessageType('error');
+      return;
+    }
+
+    if (!window.confirm(`Xác nhận xây dựng lại chỉ mục RAG cho ${selectedDept.display_name}? Quá trình này có thể mất vài phút.`)) {
+      return;
+    }
+
+    setRebuildingDepartment(true);
+    setMessage(`Đang xây dựng lại chỉ mục RAG cho ${selectedDept.display_name}...`);
+    setMessageType('info');
+
+    try {
+      const response = await adminService.rebuildDepartmentRagIndex(departmentName);
+      console.log('Rebuild Department RAG Index Response:', response);
+      
+      if (response && response.success) {
+        setMessage(response.message || `Chỉ mục RAG cho ${selectedDept.display_name} đã được xây dựng lại thành công`);
+        setMessageType('success');
+      } else {
+        setMessage(`Lỗi khi xây dựng lại chỉ mục cho ${selectedDept.display_name}: ${response?.message || 'Đã xảy ra lỗi'}`);
+        setMessageType('error');
+      }
+    } catch (error) {
+      console.error('Error rebuilding department RAG index:', error);
+      setMessage(`Lỗi khi xây dựng lại chỉ mục cho ${selectedDept.display_name}: ${error.message || 'Đã xảy ra lỗi'}`);
+      setMessageType('error');
+    } finally {
+      setRebuildingDepartment(false);
+    }
+  };
+
   const formatFileSize = (bytes) => {
     if (bytes < 1024) return bytes + ' B';
     else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
@@ -546,17 +638,58 @@ const RagManagement = () => {
   };
   
   const handleDownload = async (filename, folder) => {
+    const fileKey = `${folder || 'root'}/${filename}`;
+    
+    // Đánh dấu file đang được tải xuống
+    setDownloadingFiles(prev => ({ ...prev, [fileKey]: true }));
+    
     try {
       // Xây dựng đường dẫn đầy đủ của file
       const filePath = folder ? `${folder}/${filename}` : filename;
       console.log('Downloading file:', filePath);
       
+      // Hiển thị thông báo bắt đầu tải
+      setMessage('Đang chuẩn bị tải xuống...');
+      setMessageType('info');
+      
       // Gọi service để tải xuống file
-      await adminService.downloadFile(filePath);
+      const response = await adminService.downloadFile(filePath);
+      
+      if (response && response.success) {
+        setMessage(response.message || `Đã tải xuống file ${filename} thành công`);
+        setMessageType('success');
+      } else {
+        setMessage(`Lỗi khi tải xuống file: ${response?.message || 'Đã xảy ra lỗi'}`);
+        setMessageType('error');
+      }
     } catch (error) {
       console.error('Error downloading file:', error);
-      setMessage(`Lỗi khi tải xuống file: ${error.message || 'Đã xảy ra lỗi'}`);
-      setMessageType('error');
+      
+      // Kiểm tra nếu là lỗi authentication
+      if (error.message && error.message.includes('No authentication token found')) {
+        setMessage(`Vui lòng đăng nhập để tải xuống file. Đang thử tải xuống trực tiếp...`);
+        setMessageType('warning');
+        
+        // Thử tải xuống trực tiếp sau 2 giây
+        setTimeout(() => {
+          const fullPath = folder ? `${folder}/${filename}` : filename;
+          const encodedFilePath = encodeURIComponent(fullPath);
+          const url = `http://localhost:3434/api/admin/rag/download-file/${encodedFilePath}`;
+          window.open(url, '_blank');
+          setMessage('Đã mở link tải xuống trong tab mới');
+          setMessageType('info');
+        }, 2000);
+      } else {
+        setMessage(`Lỗi khi tải xuống file: ${error.message || 'Đã xảy ra lỗi'}`);
+        setMessageType('error');
+      }
+    } finally {
+      // Xóa trạng thái tải xuống
+      setDownloadingFiles(prev => {
+        const newState = { ...prev };
+        delete newState[fileKey];
+        return newState;
+      });
     }
   };
   
@@ -697,33 +830,29 @@ const RagManagement = () => {
                         {folder.displayName} ({folder.files_count})
                       </div>
                       <div className="folder-actions">
-                        {!folder.is_default && (
-                          <>
-                            <button 
-                              className="new-subfolder-button"
-                              onClick={() => showNewSubfolderInput(folder.name)}
-                              title="Tạo thư mục con"
-                            >
-                              <FiFolderPlus />
-                            </button>
-                            
-                            <button 
-                              className="rename-folder-button"
-                              onClick={() => showRenameFolder(folder.name)}
-                              title="Đổi tên thư mục"
-                            >
-                              <FiEdit />
-                            </button>
-                            
-                            <button 
-                              className="delete-folder-button"
-                              onClick={() => handleDeleteFolder(folder.name)}
-                              title="Xóa thư mục"
-                            >
-                              <FiTrash2 />
-                            </button>
-                          </>
-                        )}
+                        <button 
+                          className="new-subfolder-button"
+                          onClick={() => showNewSubfolderInput(folder.name)}
+                          title="Tạo thư mục con"
+                        >
+                          <FiFolderPlus />
+                        </button>
+                        
+                        <button 
+                          className="rename-folder-button"
+                          onClick={() => showRenameFolder(folder.name)}
+                          title="Đổi tên thư mục"
+                        >
+                          <FiEdit />
+                        </button>
+                        
+                        <button 
+                          className="delete-folder-button"
+                          onClick={() => handleDeleteFolder(folder.name)}
+                          title="Xóa thư mục"
+                        >
+                          <FiTrash2 />
+                        </button>
                       </div>
                     </div>
 
@@ -825,7 +954,9 @@ const RagManagement = () => {
               <h3>Tải lên tài liệu</h3>
               <div className="folder-select">
                 <span>Thư mục:</span>
-                <span className="selected-folder-name">{selectedFolder}</span>
+                <span className="selected-folder-name">
+                  {selectedFolder || 'Chưa chọn thư mục phòng ban'}
+                </span>
               </div>
               <div className="file-input-container">
                 <input
@@ -833,7 +964,7 @@ const RagManagement = () => {
                   type="file"
                   onChange={handleFileChange}
                   accept=".txt,.pdf,.docx"
-                  disabled={uploading}
+                  disabled={uploading || !selectedFolder}
                 />
                 <label htmlFor="file-upload" className="file-input-label">
                   <FiUpload /> Chọn file
@@ -844,29 +975,95 @@ const RagManagement = () => {
                 <button 
                   className="upload-button"
                   onClick={handleUpload}
-                  disabled={!selectedFile || uploading}
+                  disabled={!selectedFile || uploading || !selectedFolder}
                 >
                   <FiUpload /> {uploading ? 'Đang tải lên...' : 'Tải lên'}
                 </button>
               </div>
               <div className="file-types">
                 <span>Định dạng được hỗ trợ: .txt, .pdf, .docx</span>
+                {!selectedFolder && (
+                  <div style={{color: 'orange', marginTop: '5px'}}>
+                    Vui lòng chọn thư mục phòng ban để tải file
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="rebuild-section">
-              <button 
-                className="rebuild-button"
-                onClick={handleRebuildIndex}
-                disabled={rebuilding}
-              >
-                <FiRefreshCw /> {rebuilding ? 'Đang xây dựng...' : 'Xây dựng lại chỉ mục RAG'}
-              </button>
+              <h3>Xây dựng lại chỉ mục RAG</h3>
+              
+              {/* Button for full rebuild */}
+              <div className="rebuild-option full-rebuild-section">
+                <button 
+                  className="rebuild-button full-rebuild"
+                  onClick={handleFullRebuildIndex}
+                  disabled={rebuilding || rebuildingDepartment}
+                >
+                  <FiRefreshCw /> {rebuilding ? 'Đang xây dựng toàn bộ...' : 'Xây dựng lại toàn bộ hệ thống'}
+                </button>
+                <span className="rebuild-description">Xây dựng lại chỉ mục cho tất cả các phòng ban</span>
+              </div>
+
+              {/* Button for selected folder rebuild */}
+              {selectedFolder && (
+                <div className="selected-folder-rebuild-section">
+                  <h4>Xây dựng chỉ mục cho thư mục hiện tại</h4>
+                  <div className="rebuild-option">
+                    {(() => {
+                      // Tìm department tương ứng với folder được chọn
+                      let selectedDept = null;
+                      
+                      // Coi "default" như một department bình thường
+                      if (selectedFolder === 'default') {
+                        selectedDept = {
+                          name: 'default',
+                          display_name: 'Thư mục mặc định',
+                          description: 'Thư mục lưu trữ tài liệu chung',
+                          has_data: true
+                        };
+                      } else {
+                        // Tìm department cho các folder khác
+                        selectedDept = departments.find(dept => 
+                          dept.name === selectedFolder || 
+                          selectedFolder.startsWith(dept.name + '/')
+                        );
+                        
+                        // Nếu không tìm thấy department, tạo một department ảo cho thư mục này
+                        if (!selectedDept) {
+                          selectedDept = {
+                            name: selectedFolder,
+                            display_name: `Thư mục ${selectedFolder}`,
+                            description: `Thư mục tùy chỉnh: ${selectedFolder}`,
+                            has_data: true // Giả định có dữ liệu để cho phép xây dựng chỉ mục
+                          };
+                        }
+                      }
+                      
+                      return (
+                        <div className="department-rebuild-option">
+                          <button 
+                            className="rebuild-button department-rebuild selected-folder"
+                            onClick={() => handleDirectDepartmentRebuild(selectedDept.name)}
+                            disabled={rebuilding || rebuildingDepartment || !selectedDept.has_data}
+                          >
+                            <FiRefreshCw /> 
+                            {rebuildingDepartment ? 'Đang xây dựng...' : `Xây dựng chỉ mục ${selectedDept.display_name}`}
+                          </button>
+                          <span className="rebuild-description">
+                            {selectedDept.description}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="file-list-section">
               <div className="file-list-header">
-                <h3>Danh sách tài liệu trong thư mục: {selectedFolder}</h3>
+                <h3>Danh sách tài liệu trong thư mục: {selectedFolder || 'Chưa chọn thư mục'}</h3>
                 <button 
                   className="refresh-button"
                   onClick={fetchFiles}
@@ -880,7 +1077,9 @@ const RagManagement = () => {
                 <div className="loading">Đang tải danh sách tài liệu...</div>
               ) : (
                 <>
-                  {files.filter(file => file.folder === selectedFolder).length === 0 ? (
+                  {!selectedFolder ? (
+                    <div className="no-files">Vui lòng chọn thư mục phòng ban để xem danh sách tài liệu</div>
+                  ) : files.filter(file => file.folder === selectedFolder).length === 0 ? (
                     <div className="no-files">Không có tài liệu nào trong thư mục {selectedFolder}</div>
                   ) : (
                     <table className="file-table">
@@ -916,8 +1115,13 @@ const RagManagement = () => {
                                     className="download-button"
                                     onClick={() => handleDownload(file.filename, file.folder)}
                                     title="Tải xuống file"
+                                    disabled={downloadingFiles[`${file.folder || 'root'}/${file.filename}`]}
                                   >
-                                    <FiDownload />
+                                    {downloadingFiles[`${file.folder || 'root'}/${file.filename}`] ? (
+                                      <FiRefreshCw className="spinning" />
+                                    ) : (
+                                      <FiDownload />
+                                    )}
                                   </button>
                                   <button
                                     className="delete-button"
@@ -955,6 +1159,50 @@ const RagManagement = () => {
                 <FiEdit /> Lưu thay đổi
               </button>
               <button className="cancel-button" onClick={cancelEdit}>
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Department Selection Modal */}
+      {showDepartmentModal && (
+        <div className="department-modal-overlay">
+          <div className="department-modal">
+            <h3>Chọn phòng ban để xây dựng lại chỉ mục RAG</h3>
+            <p>Chọn phòng ban bạn muốn xây dựng lại chỉ mục:</p>
+            
+            <div className="department-options">
+              {departments.map(dept => (
+                <div key={dept.name} className="department-option">
+                  <input
+                    type="radio"
+                    id={`rebuild-${dept.name}`}
+                    name="rebuild-option"
+                    value={dept.name}
+                    onChange={() => setSelectedDepartment(dept.name)}
+                    checked={selectedDepartment === dept.name}
+                    disabled={!dept.has_data}
+                  />
+                  <label htmlFor={`rebuild-${dept.name}`} className={!dept.has_data ? 'disabled' : ''}>
+                    <strong>{dept.display_name}</strong>
+                    <span>{dept.description}</span>
+                    {!dept.has_data && <span className="no-data">(Không có dữ liệu)</span>}
+                  </label>
+                </div>
+              ))}
+            </div>
+            
+            <div className="modal-buttons">
+              <button 
+                className="confirm-button" 
+                onClick={handleDepartmentRebuildIndex}
+                disabled={!selectedDepartment || (rebuilding || rebuildingDepartment)}
+              >
+                <FiRefreshCw /> {(rebuilding || rebuildingDepartment) ? 'Đang xây dựng...' : 'Xây dựng lại'}
+              </button>
+              <button className="cancel-button" onClick={closeDepartmentModal}>
                 Hủy
               </button>
             </div>
